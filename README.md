@@ -22,18 +22,18 @@ climb.
 
 ### All commands
 
-| Command                | What it does                                            |
-| ---------------------- | ------------------------------------------------------- |
-| `npm install`          | Install dependencies                                    |
-| `npm run dev`          | Start the Vite dev server with HMR                      |
-| `npm run build`        | Type-check (`tsc -b`) and build the production bundle   |
-| `npm run preview`      | Serve the production build locally                      |
-| `npm test`             | Run the Vitest unit/physics + smoke tests               |
-| `npm run test:watch`   | Run Vitest in watch mode                                |
-| `npm run test:e2e`     | Run the Playwright end-to-end smoke test\*              |
-| `npm run lint`         | Lint with ESLint                                        |
-| `npm run typecheck`    | Type-check without emitting                             |
-| `npm run format`       | Format the codebase with Prettier                       |
+| Command              | What it does                                          |
+| -------------------- | ----------------------------------------------------- |
+| `npm install`        | Install dependencies                                  |
+| `npm run dev`        | Start the Vite dev server with HMR                    |
+| `npm run build`      | Type-check (`tsc -b`) and build the production bundle |
+| `npm run preview`    | Serve the production build locally                    |
+| `npm test`           | Run the Vitest unit/physics + smoke tests             |
+| `npm run test:watch` | Run Vitest in watch mode                              |
+| `npm run test:e2e`   | Run the Playwright end-to-end smoke test\*            |
+| `npm run lint`       | Lint with ESLint                                      |
+| `npm run typecheck`  | Type-check without emitting                           |
+| `npm run format`     | Format the codebase with Prettier                     |
 
 \* `npm run test:e2e` downloads a browser on first run (`npx playwright install
 chromium`) and builds + previews the app automatically. It needs network access
@@ -48,18 +48,18 @@ Controls are also available in-app from the **?** button and the main-menu
 
 ### Keyboard & mouse (desktop/laptop)
 
-| Key                | Action                       |
-| ------------------ | ---------------------------- |
-| `W` / `↓`          | Pitch down (nose down)       |
-| `S` / `↑`          | Pitch up (nose up)           |
-| `A` / `←`          | Roll left                    |
-| `D` / `→`          | Roll right                   |
-| `Q` / `E`          | Yaw left / right (rudder)    |
-| `Shift` / `Ctrl`   | Throttle up / down           |
-| `X` / `Z`          | Throttle full / idle         |
-| `P` / `Esc`        | Pause / resume               |
-| `R`                | Reset flight                 |
-| `H`                | Toggle the controls overlay  |
+| Key              | Action                      |
+| ---------------- | --------------------------- |
+| `W` / `↓`        | Pitch down (nose down)      |
+| `S` / `↑`        | Pitch up (nose up)          |
+| `A` / `←`        | Roll left                   |
+| `D` / `→`        | Roll right                  |
+| `Q` / `E`        | Yaw left / right (rudder)   |
+| `Shift` / `Ctrl` | Throttle up / down          |
+| `X` / `Z`        | Throttle full / idle        |
+| `P` / `Esc`      | Pause / resume              |
+| `R`              | Reset flight                |
+| `H`              | Toggle the controls overlay |
 
 ### Touch (tablet/phone)
 
