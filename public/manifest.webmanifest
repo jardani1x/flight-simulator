@@ -1,0 +1,19 @@
+{
+  "name": "Skyward — Web Flight Simulator",
+  "short_name": "Skyward",
+  "description": "An immersive web flight simulator playable on desktop, tablet and phone.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#0b1622",
+  "theme_color": "#0b1622",
+  "icons": [
+    {
+      "src": "./favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

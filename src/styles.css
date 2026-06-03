@@ -1,0 +1,581 @@
+:root {
+  --bg: #0b1622;
+  --panel-bg: rgba(12, 20, 30, 0.92);
+  --panel-border: rgba(120, 160, 200, 0.25);
+  --accent: #4cc2ff;
+  --accent-strong: #1f9fe0;
+  --text: #e8f0f8;
+  --text-dim: #9fb3c6;
+  --hud: #6ff0c8;
+  --warn: #ff5d5d;
+  --shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+  --radius: 14px;
+  --font: 'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, 'SF Mono', 'Roboto Mono', Menlo, Consolas, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+body {
+  /* Prevent iOS double-tap zoom / pull-to-refresh interfering with controls. */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.app {
+  position: fixed;
+  inset: 0;
+}
+
+canvas {
+  display: block;
+  touch-action: none;
+}
+
+/* ------------------------------------------------------------------ Buttons */
+.btn {
+  appearance: none;
+  border: 1px solid var(--panel-border);
+  background: rgba(40, 60, 80, 0.6);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: clamp(0.95rem, 2.4vw, 1.05rem);
+  font-weight: 600;
+  padding: 0.7em 1.3em;
+  border-radius: 10px;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    transform 0.08s ease;
+}
+.btn:hover {
+  background: rgba(60, 90, 120, 0.75);
+}
+.btn:active {
+  transform: translateY(1px);
+}
+.btn:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+.btn-primary {
+  background: linear-gradient(180deg, var(--accent), var(--accent-strong));
+  border-color: transparent;
+  color: #04222f;
+}
+.btn-primary:hover {
+  background: linear-gradient(180deg, #66cbff, var(--accent));
+}
+.btn-large {
+  font-size: clamp(1.1rem, 3.2vw, 1.35rem);
+  padding: 0.85em 1.6em;
+}
+
+.icon-btn {
+  appearance: none;
+  width: clamp(44px, 9vw, 52px);
+  height: clamp(44px, 9vw, 52px);
+  border-radius: 12px;
+  border: 1px solid var(--panel-border);
+  background: rgba(12, 22, 34, 0.7);
+  color: var(--text);
+  font-size: clamp(1rem, 3vw, 1.2rem);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  backdrop-filter: blur(6px);
+}
+.icon-btn:hover {
+  background: rgba(30, 50, 70, 0.85);
+}
+.icon-btn:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ----------------------------------------------------------------- Top bar */
+.top-bar {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  right: max(12px, env(safe-area-inset-right));
+  display: flex;
+  gap: 8px;
+  z-index: 30;
+}
+
+/* --------------------------------------------------------------------- HUD */
+.hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 20;
+  font-family: var(--mono);
+}
+
+.hud-gauge {
+  position: absolute;
+  background: rgba(6, 14, 22, 0.42);
+  border: 1px solid rgba(110, 240, 200, 0.25);
+  border-radius: 10px;
+  padding: 6px 12px;
+  min-width: 78px;
+  text-align: center;
+  color: var(--hud);
+  text-shadow: 0 0 8px rgba(111, 240, 200, 0.35);
+}
+.hud-gauge-value {
+  font-size: clamp(1.3rem, 4.5vw, 2rem);
+  font-weight: 700;
+  line-height: 1.1;
+}
+.hud-gauge-label {
+  font-size: clamp(0.6rem, 1.6vw, 0.72rem);
+  letter-spacing: 0.12em;
+  color: var(--text-dim);
+}
+
+.hud-airspeed {
+  top: 50%;
+  left: max(14px, env(safe-area-inset-left));
+  transform: translateY(-50%);
+}
+.hud-altitude {
+  top: 50%;
+  right: max(14px, env(safe-area-inset-right));
+  transform: translateY(-50%);
+}
+.hud-heading {
+  top: max(12px, env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+}
+.hud-vspeed {
+  top: calc(50% + 64px);
+  right: max(14px, env(safe-area-inset-right));
+}
+
+.hud-throttle {
+  position: absolute;
+  left: max(14px, env(safe-area-inset-left));
+  top: calc(50% + 64px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-dim);
+}
+.hud-throttle-bar {
+  width: 16px;
+  height: 90px;
+  border: 1px solid rgba(110, 240, 200, 0.3);
+  border-radius: 8px;
+  background: rgba(6, 14, 22, 0.42);
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+}
+.hud-throttle-fill {
+  width: 100%;
+  height: 0%;
+  background: linear-gradient(180deg, var(--hud), #2fbf95);
+  transition: height 0.08s linear;
+}
+.hud-throttle-label {
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+}
+
+.hud-attitude {
+  position: absolute;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.4));
+}
+
+.hud-fps {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  left: max(14px, env(safe-area-inset-left));
+  color: var(--hud);
+  font-size: 0.8rem;
+  background: rgba(6, 14, 22, 0.42);
+  padding: 4px 8px;
+  border-radius: 8px;
+}
+
+.hud-stall {
+  position: absolute;
+  top: calc(max(12px, env(safe-area-inset-top)) + 56px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--warn);
+  color: #fff;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  padding: 6px 16px;
+  border-radius: 8px;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+.hud-stall.visible {
+  opacity: 1;
+  animation: stall-blink 0.6s steps(2, start) infinite;
+}
+@keyframes stall-blink {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* --------------------------------------------------------- Touch controls */
+.touch-controls {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 25;
+}
+.joystick {
+  position: absolute;
+  left: max(20px, env(safe-area-inset-left));
+  bottom: max(20px, env(safe-area-inset-bottom));
+  width: clamp(120px, 30vw, 168px);
+  height: clamp(120px, 30vw, 168px);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(40, 60, 80, 0.45), rgba(10, 18, 28, 0.55));
+  border: 2px solid rgba(120, 160, 200, 0.35);
+  pointer-events: auto;
+  touch-action: none;
+  display: grid;
+  place-items: center;
+}
+.joystick-knob {
+  width: 38%;
+  height: 38%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, var(--accent), var(--accent-strong));
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+  will-change: transform;
+}
+
+.touch-right {
+  position: absolute;
+  right: max(20px, env(safe-area-inset-right));
+  bottom: max(20px, env(safe-area-inset-bottom));
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  pointer-events: none;
+}
+.throttle-slider {
+  position: relative;
+  width: clamp(46px, 11vw, 60px);
+  height: clamp(130px, 32vw, 180px);
+  border-radius: 14px;
+  background: rgba(10, 18, 28, 0.55);
+  border: 2px solid rgba(120, 160, 200, 0.35);
+  overflow: hidden;
+  pointer-events: auto;
+  touch-action: none;
+  display: flex;
+  align-items: flex-end;
+}
+.throttle-slider-fill {
+  width: 100%;
+  background: linear-gradient(180deg, var(--hud), #2fbf95);
+}
+.throttle-slider-label {
+  position: absolute;
+  top: 6px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  color: var(--text-dim);
+}
+.throttle-slider:focus-visible {
+  outline: 3px solid var(--accent);
+}
+
+.rudder {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+.rudder-btn {
+  width: clamp(54px, 13vw, 68px);
+  height: clamp(54px, 13vw, 68px);
+  border-radius: 14px;
+  border: 2px solid rgba(120, 160, 200, 0.35);
+  background: rgba(10, 18, 28, 0.55);
+  color: var(--text);
+  font-size: 1.4rem;
+  pointer-events: auto;
+  touch-action: none;
+  cursor: pointer;
+}
+.rudder-btn:active {
+  background: rgba(40, 70, 100, 0.8);
+}
+
+.orientation-hint {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(12, 22, 34, 0.85);
+  border: 1px solid var(--panel-border);
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  z-index: 26;
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------- Menus/modal */
+.menu-screen {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(ellipse at center, rgba(8, 16, 26, 0.55), rgba(6, 12, 20, 0.82));
+  z-index: 40;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
+    env(safe-area-inset-left);
+}
+.menu-content {
+  text-align: center;
+  max-width: min(680px, 92vw);
+  max-height: 92vh;
+  overflow-y: auto;
+  padding: 12px;
+}
+.title {
+  font-size: clamp(2.6rem, 11vw, 5rem);
+  letter-spacing: 0.22em;
+  margin: 0;
+  background: linear-gradient(180deg, #ffffff, var(--accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 6px 40px rgba(76, 194, 255, 0.25);
+}
+.subtitle {
+  margin: 0.2em 0 1.6em;
+  color: var(--text-dim);
+  letter-spacing: 0.3em;
+  font-size: clamp(0.8rem, 2.4vw, 1rem);
+  text-transform: uppercase;
+}
+.menu-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: stretch;
+  max-width: 320px;
+  margin: 0 auto;
+}
+.hint {
+  margin-top: 1.4em;
+  color: var(--text-dim);
+  font-size: clamp(0.8rem, 2.2vw, 0.95rem);
+}
+.menu-controls {
+  margin-top: 1.4em;
+  text-align: left;
+  background: rgba(8, 16, 26, 0.5);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 10px 16px;
+}
+.menu-controls summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(4, 10, 18, 0.62);
+  z-index: 50;
+  padding: 16px;
+  backdrop-filter: blur(3px);
+}
+.panel {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: clamp(16px, 4vw, 26px);
+  width: min(560px, 94vw);
+  max-height: 88vh;
+  overflow-y: auto;
+}
+.panel-narrow {
+  width: min(380px, 92vw);
+}
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.panel-header h2 {
+  margin: 0;
+  font-size: clamp(1.3rem, 4vw, 1.7rem);
+}
+.panel-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+}
+.crash-panel {
+  text-align: center;
+}
+.crash-panel h2 {
+  color: var(--warn);
+}
+
+/* Settings */
+.setting {
+  margin: 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.setting-row {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+.setting label {
+  color: var(--text-dim);
+  font-size: 0.95rem;
+}
+.setting input[type='range'] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+.setting input[type='checkbox'] {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--accent);
+}
+.segmented {
+  display: flex;
+  gap: 6px;
+}
+.segment {
+  flex: 1;
+  padding: 0.6em;
+  border-radius: 8px;
+  border: 1px solid var(--panel-border);
+  background: rgba(40, 60, 80, 0.4);
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 600;
+}
+.segment.active {
+  background: linear-gradient(180deg, var(--accent), var(--accent-strong));
+  color: #04222f;
+  border-color: transparent;
+}
+.segment:focus-visible {
+  outline: 3px solid var(--accent);
+}
+
+/* Controls reference */
+.controls-reference {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+.controls-col h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  color: var(--accent);
+}
+.controls-col dl {
+  margin: 0 0 14px;
+}
+.control-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 3px 0;
+  border-bottom: 1px dashed rgba(120, 160, 200, 0.15);
+}
+.control-row dt {
+  font-family: var(--mono);
+  color: var(--text);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+.control-row dd {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  text-align: right;
+}
+
+.attitude {
+  width: clamp(96px, 22vw, 130px);
+  height: clamp(96px, 22vw, 130px);
+}
+
+/* ---------------------------------------------------- Responsive tweaks */
+@media (max-width: 640px) {
+  .controls-reference {
+    grid-template-columns: 1fr;
+  }
+  .hud-gauge {
+    min-width: 64px;
+    padding: 4px 8px;
+  }
+}
+
+/* Landscape phones: keep the HUD compact so it doesn't crowd touch controls. */
+@media (max-height: 480px) and (orientation: landscape) {
+  .hud-attitude {
+    left: auto;
+    right: 50%;
+    transform: translateX(50%) scale(0.85);
+  }
+  .hud-throttle {
+    display: none; /* throttle slider already on screen for touch */
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hud-stall.visible {
+    animation: none;
+  }
+  .btn,
+  .hud-throttle-fill {
+    transition: none;
+  }
+}

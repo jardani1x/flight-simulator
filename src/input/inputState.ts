@@ -1,0 +1,74 @@
+import type { ControlInput } from '../core/types';
+import { clamp } from '../physics/mathUtils';
+
+/**
+ * A single mutable control-input object shared by every input source and read by
+ * the simulation in the frame loop. Sharing one object (rather than React state)
+ * means high-frequency control changes never trigger re-renders.
+ *
+ * Each source writes into its own "channel" so sources compose instead of
+ * overwriting one another (e.g. touch joystick + keyboard simultaneously).
+ */
+interface Channel {
+  pitch: number;
+  roll: number;
+  yaw: number;
+}
+
+const keyboardChannel: Channel = { pitch: 0, roll: 0, yaw: 0 };
+const touchChannel: Channel = { pitch: 0, roll: 0, yaw: 0 };
+const gamepadChannel: Channel = { pitch: 0, roll: 0, yaw: 0 };
+
+/** Absolute throttle, owned globally because all sources set it as a target. */
+let throttle = 0;
+
+/** The merged, clamped control input read by the simulation. */
+const merged: ControlInput = { pitch: 0, roll: 0, yaw: 0, throttle: 0 };
+
+export type InputChannel = 'keyboard' | 'touch' | 'gamepad';
+
+const channels: Record<InputChannel, Channel> = {
+  keyboard: keyboardChannel,
+  touch: touchChannel,
+  gamepad: gamepadChannel,
+};
+
+/** Set an axis value for a given input source. Values are clamped to [-1, 1]. */
+export function setAxis(source: InputChannel, axis: 'pitch' | 'roll' | 'yaw', value: number): void {
+  channels[source][axis] = clamp(value, -1, 1);
+}
+
+/** Set the absolute throttle target [0, 1]. */
+export function setThrottle(value: number): void {
+  throttle = clamp(value, 0, 1);
+}
+
+/** Adjust throttle by a delta (used by keyboard hold-to-change). */
+export function nudgeThrottle(delta: number): void {
+  throttle = clamp(throttle + delta, 0, 1);
+}
+
+export function getThrottle(): number {
+  return throttle;
+}
+
+/** Zero every channel — used on reset / when controls are released. */
+export function resetInput(): void {
+  for (const key of Object.keys(channels) as InputChannel[]) {
+    channels[key].pitch = 0;
+    channels[key].roll = 0;
+    channels[key].yaw = 0;
+  }
+}
+
+/**
+ * Merge all channels into a single clamped ControlInput. Returns a stable object
+ * reference (mutated in place) so it can be read every frame without allocating.
+ */
+export function readControlInput(): ControlInput {
+  merged.pitch = clamp(keyboardChannel.pitch + touchChannel.pitch + gamepadChannel.pitch, -1, 1);
+  merged.roll = clamp(keyboardChannel.roll + touchChannel.roll + gamepadChannel.roll, -1, 1);
+  merged.yaw = clamp(keyboardChannel.yaw + touchChannel.yaw + gamepadChannel.yaw, -1, 1);
+  merged.throttle = throttle;
+  return merged;
+}
