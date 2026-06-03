@@ -21,6 +21,7 @@ import {
   MAX_YAW_RATE,
   MAX_THRUST,
   STALL_ANGLE,
+  STALL_BLEND_RANGE,
   STALL_LIFT_FLOOR,
   WING_AREA,
 } from '../config/constants';
@@ -84,8 +85,8 @@ export function liftCoefficient(aoa: number): number {
     return LIFT_SLOPE * aoa;
   }
   const peak = LIFT_SLOPE * STALL_ANGLE;
-  // Blend from the peak down to the floor over ~0.35 rad past the stall.
-  const excess = clamp((magnitude - STALL_ANGLE) / 0.35, 0, 1);
+  // Blend from the peak down to the floor over STALL_BLEND_RANGE past the stall.
+  const excess = clamp((magnitude - STALL_ANGLE) / STALL_BLEND_RANGE, 0, 1);
   const factor = 1 - (1 - STALL_LIFT_FLOOR) * excess;
   return sign * peak * factor;
 }

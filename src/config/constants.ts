@@ -32,6 +32,9 @@ export const LIFT_SLOPE = 5.5;
 /** Critical angle of attack (rad) beyond which the wing stalls (~15°). */
 export const STALL_ANGLE = 0.26;
 
+/** Angle-of-attack range (rad) past the stall over which lift fades to the floor. */
+export const STALL_BLEND_RANGE = 0.35;
+
 /**
  * Fraction of lift retained once fully stalled. The wing never produces zero
  * lift in reality, and keeping a floor avoids a brick-like fall that is no fun.

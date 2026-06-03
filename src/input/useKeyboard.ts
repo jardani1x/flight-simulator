@@ -8,6 +8,9 @@ interface DiscreteHandlers {
   onReset: () => void;
 }
 
+// Sensitivity and pitch inversion are applied centrally in readControlInput, so
+// this hook only emits raw, normalised axis values from the held-key set.
+
 const isAny = (code: string, list: readonly string[]): boolean => list.includes(code);
 
 /**
@@ -19,9 +22,6 @@ const isAny = (code: string, list: readonly string[]): boolean => list.includes(
  * control surface never triggers a React re-render.
  */
 export function useKeyboard(handlers: DiscreteHandlers): void {
-  const sensitivity = useStore((s) => s.settings.sensitivity);
-  const invertPitch = useStore((s) => s.settings.invertPitch);
-
   useEffect(() => {
     const held = new Set<string>();
     let rafId = 0;
@@ -46,10 +46,9 @@ export function useKeyboard(handlers: DiscreteHandlers): void {
         if (isAny(code, KEYS.throttleDown)) nudgeThrottle(-THROTTLE_RATE * dt);
       }
 
-      if (invertPitch) pitch = -pitch;
-      setAxis('keyboard', 'pitch', pitch * sensitivity);
-      setAxis('keyboard', 'roll', roll * sensitivity);
-      setAxis('keyboard', 'yaw', yaw * sensitivity);
+      setAxis('keyboard', 'pitch', pitch);
+      setAxis('keyboard', 'roll', roll);
+      setAxis('keyboard', 'yaw', yaw);
 
       rafId = requestAnimationFrame(updateAxes);
     };
@@ -120,5 +119,5 @@ export function useKeyboard(handlers: DiscreteHandlers): void {
       cancelAnimationFrame(rafId);
       onBlur();
     };
-  }, [handlers, sensitivity, invertPitch]);
+  }, [handlers]);
 }

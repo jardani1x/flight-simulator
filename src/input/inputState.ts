@@ -1,5 +1,6 @@
 import type { ControlInput } from '../core/types';
 import { clamp } from '../physics/mathUtils';
+import { useStore } from '../state/store';
 
 /**
  * A single mutable control-input object shared by every input source and read by
@@ -62,13 +63,22 @@ export function resetInput(): void {
 }
 
 /**
- * Merge all channels into a single clamped ControlInput. Returns a stable object
- * reference (mutated in place) so it can be read every frame without allocating.
+ * Merge all channels into a single clamped ControlInput, applying the user's
+ * sensitivity and pitch-inversion settings centrally (sources write raw axes).
+ * Returns a stable object reference (mutated in place) so it can be read every
+ * frame without allocating.
  */
 export function readControlInput(): ControlInput {
-  merged.pitch = clamp(keyboardChannel.pitch + touchChannel.pitch + gamepadChannel.pitch, -1, 1);
-  merged.roll = clamp(keyboardChannel.roll + touchChannel.roll + gamepadChannel.roll, -1, 1);
-  merged.yaw = clamp(keyboardChannel.yaw + touchChannel.yaw + gamepadChannel.yaw, -1, 1);
+  const { sensitivity, invertPitch } = useStore.getState().settings;
+
+  let pitch = keyboardChannel.pitch + touchChannel.pitch + gamepadChannel.pitch;
+  if (invertPitch) pitch = -pitch;
+  const roll = keyboardChannel.roll + touchChannel.roll + gamepadChannel.roll;
+  const yaw = keyboardChannel.yaw + touchChannel.yaw + gamepadChannel.yaw;
+
+  merged.pitch = clamp(pitch * sensitivity, -1, 1);
+  merged.roll = clamp(roll * sensitivity, -1, 1);
+  merged.yaw = clamp(yaw * sensitivity, -1, 1);
   merged.throttle = throttle;
   return merged;
 }

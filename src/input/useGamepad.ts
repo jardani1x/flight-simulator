@@ -1,19 +1,16 @@
 import { useEffect } from 'react';
 import { setAxis, setThrottle } from './inputState';
 import { applyDeadzone } from '../physics/mathUtils';
-import { useStore } from '../state/store';
 
 const DEADZONE = 0.12;
 
 /**
  * Optional gamepad support (standard mapping). Left stick = roll/pitch, right
  * stick X = yaw, right trigger = throttle. Polled per frame; absent gamepads are
- * a no-op so this is always safe to mount.
+ * a no-op so this is always safe to mount. Raw axes are emitted here; sensitivity
+ * and pitch inversion are applied centrally in readControlInput.
  */
 export function useGamepad(): void {
-  const sensitivity = useStore((s) => s.settings.sensitivity);
-  const invertPitch = useStore((s) => s.settings.invertPitch);
-
   useEffect(() => {
     if (typeof navigator === 'undefined' || !navigator.getGamepads) return;
 
@@ -28,14 +25,13 @@ export function useGamepad(): void {
         active = true;
         const axes = pad.axes;
         const roll = applyDeadzone(axes[0] ?? 0, DEADZONE);
-        let pitch = applyDeadzone(axes[1] ?? 0, DEADZONE); // stick up = -1 = nose up
+        const stickY = applyDeadzone(axes[1] ?? 0, DEADZONE); // stick up = -1
         const yaw = applyDeadzone(axes[2] ?? 0, DEADZONE);
-        if (invertPitch) pitch = -pitch;
 
-        setAxis('gamepad', 'roll', roll * sensitivity);
+        setAxis('gamepad', 'roll', roll);
         // Stick up (negative) should pitch nose up (positive command).
-        setAxis('gamepad', 'pitch', -pitch * sensitivity);
-        setAxis('gamepad', 'yaw', yaw * sensitivity);
+        setAxis('gamepad', 'pitch', -stickY);
+        setAxis('gamepad', 'yaw', yaw);
 
         // Right trigger (button 7) as throttle if present.
         const trigger = pad.buttons[7];
@@ -55,5 +51,5 @@ export function useGamepad(): void {
 
     rafId = requestAnimationFrame(poll);
     return () => cancelAnimationFrame(rafId);
-  }, [sensitivity, invertPitch]);
+  }, []);
 }

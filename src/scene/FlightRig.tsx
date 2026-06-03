@@ -19,6 +19,9 @@ const _desiredCamPos = new Vector3();
 const _lookTarget = new Vector3();
 const _worldUp = new Vector3(0, 1, 0);
 const _forward = new Vector3();
+// Last valid horizontal heading, retained so the camera doesn't snap when the
+// aircraft points straight up/down (e.g. mid-loop) and horizForward collapses.
+const _lastHorizForward = new Vector3(0, 0, -1);
 const BODY_FORWARD = new Vector3(0, 0, -1);
 
 /**
@@ -53,10 +56,13 @@ export function FlightRig(): JSX.Element {
     // orientation, so loops and rolls don't make the camera tumble.
     _forward.copy(BODY_FORWARD).applyQuaternion(orientation);
     _horizForward.set(_forward.x, 0, _forward.z);
-    if (_horizForward.lengthSq() < 1e-4) {
-      _horizForward.set(0, 0, -1); // looking straight up/down: keep previous heading-ish
+    if (_horizForward.lengthSq() < 1e-3) {
+      // Pointing near-vertical: keep the last good heading to avoid a snap.
+      _horizForward.copy(_lastHorizForward);
+    } else {
+      _horizForward.normalize();
+      _lastHorizForward.copy(_horizForward);
     }
-    _horizForward.normalize();
 
     _desiredCamPos
       .copy(position)

@@ -1,20 +1,17 @@
 import { useCallback, useRef, useState } from 'react';
 import { setAxis, setThrottle } from './inputState';
-import { useStore } from '../state/store';
 import { clamp } from '../physics/mathUtils';
 
 /**
  * On-screen controls for touch devices: a left analog stick (roll + pitch), a
- * right vertical throttle slider, and rudder (yaw) buttons. All write directly to
- * the shared input state. Targets are sized generously for fingers.
+ * right vertical throttle slider, and rudder (yaw) buttons. All write raw axes to
+ * the shared input state (sensitivity/inversion are applied centrally). Targets
+ * are sized generously for fingers.
  */
 export function TouchControls(): JSX.Element {
-  const sensitivity = useStore((s) => s.settings.sensitivity);
-  const invertPitch = useStore((s) => s.settings.invertPitch);
-
   return (
     <div className="touch-controls" aria-label="Touch flight controls">
-      <Joystick sensitivity={sensitivity} invertPitch={invertPitch} />
+      <Joystick />
       <div className="touch-right">
         <ThrottleSlider />
         <RudderButtons />
@@ -23,42 +20,30 @@ export function TouchControls(): JSX.Element {
   );
 }
 
-function Joystick({
-  sensitivity,
-  invertPitch,
-}: {
-  sensitivity: number;
-  invertPitch: boolean;
-}): JSX.Element {
+function Joystick(): JSX.Element {
   const baseRef = useRef<HTMLDivElement>(null);
   const [knob, setKnob] = useState({ x: 0, y: 0 });
   const activePointer = useRef<number | null>(null);
 
-  const updateFromEvent = useCallback(
-    (clientX: number, clientY: number) => {
-      const base = baseRef.current;
-      if (!base) return;
-      const rect = base.getBoundingClientRect();
-      const cx = rect.left + rect.width / 2;
-      const cy = rect.top + rect.height / 2;
-      const radius = rect.width / 2;
-      let dx = (clientX - cx) / radius;
-      let dy = (clientY - cy) / radius;
-      const mag = Math.hypot(dx, dy);
-      if (mag > 1) {
-        dx /= mag;
-        dy /= mag;
-      }
-      setKnob({ x: dx, y: dy });
-      const roll = clamp(dx, -1, 1) * sensitivity;
-      // Drag up (negative dy) = nose up = positive pitch command.
-      let pitch = clamp(-dy, -1, 1) * sensitivity;
-      if (invertPitch) pitch = -pitch;
-      setAxis('touch', 'roll', roll);
-      setAxis('touch', 'pitch', pitch);
-    },
-    [sensitivity, invertPitch],
-  );
+  const updateFromEvent = useCallback((clientX: number, clientY: number) => {
+    const base = baseRef.current;
+    if (!base) return;
+    const rect = base.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const radius = rect.width / 2;
+    let dx = (clientX - cx) / radius;
+    let dy = (clientY - cy) / radius;
+    const mag = Math.hypot(dx, dy);
+    if (mag > 1) {
+      dx /= mag;
+      dy /= mag;
+    }
+    setKnob({ x: dx, y: dy });
+    setAxis('touch', 'roll', clamp(dx, -1, 1));
+    // Drag up (negative dy) = nose up = positive pitch command.
+    setAxis('touch', 'pitch', clamp(-dy, -1, 1));
+  }, []);
 
   const release = useCallback(() => {
     activePointer.current = null;
