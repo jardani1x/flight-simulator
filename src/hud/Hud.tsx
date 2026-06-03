@@ -26,6 +26,7 @@ export function Hud(): JSX.Element {
   const throttleFillRef = useRef<HTMLDivElement>(null);
   const throttleTextRef = useRef<HTMLSpanElement>(null);
   const stallRef = useRef<HTMLDivElement>(null);
+  const boundaryRef = useRef<HTMLDivElement>(null);
   const fpsRef = useRef<HTMLSpanElement>(null);
   const horizonRef = useRef<SVGGElement>(null);
 
@@ -67,6 +68,9 @@ export function Hud(): JSX.Element {
         }
         if (stallRef.current) {
           stallRef.current.classList.toggle('visible', t.stalled);
+        }
+        if (boundaryRef.current) {
+          boundaryRef.current.classList.toggle('visible', t.boundaryWarning);
         }
         if (showFps && fpsRef.current) {
           fpsRef.current.textContent = `${Math.round(perf.fps)} fps`;
@@ -138,6 +142,11 @@ export function Hud(): JSX.Element {
       {/* Stall warning */}
       <div className="hud-stall" ref={stallRef} role="alert">
         STALL
+      </div>
+
+      {/* Airspace boundary warning */}
+      <div className="hud-boundary" ref={boundaryRef} role="alert">
+        ⚠ AIRSPACE BOUNDARY — TURN BACK
       </div>
     </div>
   );

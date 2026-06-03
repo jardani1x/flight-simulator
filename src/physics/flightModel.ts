@@ -4,6 +4,7 @@ import {
   AERO_STABILITY,
   AIRCRAFT_MASS,
   AIR_DENSITY,
+  CEILING,
   CONTROL_AUTHORITY_SPEED,
   CONTROL_RESPONSIVENESS,
   CRASH_ATTITUDE,
@@ -24,6 +25,7 @@ import {
   STALL_BLEND_RANGE,
   STALL_LIFT_FLOOR,
   WING_AREA,
+  WORLD_HALF_SIZE,
 } from '../config/constants';
 import { clamp, damp, wrapHeading } from './mathUtils';
 
@@ -282,6 +284,11 @@ export function deriveTelemetry(state: AircraftState, out: Telemetry): void {
   out.onGround = state.onGround;
   out.crashed = state.crashed;
   out.groundSpeed = Math.hypot(state.velocity.x, state.velocity.z);
+
+  // Warn when the aircraft nears the playable edge or the service ceiling.
+  const horizontalExtent = Math.max(Math.abs(state.position.x), Math.abs(state.position.z));
+  out.boundaryWarning =
+    !state.onGround && (horizontalExtent > WORLD_HALF_SIZE * 0.9 || out.altitude > CEILING * 0.92);
 }
 
 /** Allocate a zeroed Telemetry object. */
@@ -299,5 +306,6 @@ export function createTelemetry(): Telemetry {
     onGround: true,
     crashed: false,
     groundSpeed: 0,
+    boundaryWarning: false,
   };
 }

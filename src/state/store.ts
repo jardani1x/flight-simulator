@@ -21,6 +21,8 @@ export interface AppState {
   settingsOpen: boolean;
   deviceClass: DeviceClass;
   settings: Settings;
+  /** True once settings have been loaded from storage or device defaults applied. */
+  settingsHydrated: boolean;
 
   // actions
   start: () => void;
@@ -31,6 +33,8 @@ export interface AppState {
   setSettingsOpen: (open: boolean) => void;
   setDeviceClass: (deviceClass: DeviceClass) => void;
   updateSettings: (patch: Partial<Settings>) => void;
+  /** Apply a device-appropriate default quality on first run only. */
+  applyDeviceDefaults: (deviceClass: DeviceClass) => void;
 }
 
 const DEFAULT_SETTINGS: Settings = {
@@ -49,6 +53,16 @@ function loadSettings(): Settings {
     return { ...DEFAULT_SETTINGS, ...parsed };
   } catch {
     return { ...DEFAULT_SETTINGS };
+  }
+}
+
+/** Whether the user already has persisted settings (so we don't override them). */
+function hasPersistedSettings(): boolean {
+  if (typeof localStorage === 'undefined') return false;
+  try {
+    return localStorage.getItem(SETTINGS_STORAGE_KEY) != null;
+  } catch {
+    return false;
   }
 }
 
@@ -80,6 +94,7 @@ export const useStore = create<AppState>((set, get) => ({
   settingsOpen: false,
   deviceClass: 'desktop',
   settings: loadSettings(),
+  settingsHydrated: hasPersistedSettings(),
 
   start: () => set({ started: true, paused: false }),
   setPaused: (paused) => set({ paused }),
@@ -91,6 +106,14 @@ export const useStore = create<AppState>((set, get) => ({
   updateSettings: (patch) => {
     const next = { ...get().settings, ...patch };
     persistSettings(next);
-    set({ settings: next });
+    set({ settings: next, settingsHydrated: true });
+  },
+  applyDeviceDefaults: (deviceClass) => {
+    // Only on first run: respect any previously saved user preference.
+    if (get().settingsHydrated) return;
+    const graphicsQuality = defaultQualityForDevice(deviceClass);
+    const next = { ...get().settings, graphicsQuality };
+    persistSettings(next);
+    set({ settings: next, settingsHydrated: true });
   },
 }));

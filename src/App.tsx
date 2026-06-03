@@ -15,18 +15,38 @@ import { SettingsPanel } from './ui/SettingsPanel';
 import { ControlsHelpOverlay } from './ui/ControlsHelp';
 import { TopBar } from './ui/TopBar';
 import { OrientationHint } from './ui/OrientationHint';
+import { ErrorBoundary, isWebGLAvailable } from './ui/ErrorBoundary';
 
 export function App(): JSX.Element {
   return (
-    <SimulationProvider>
-      <Game />
-    </SimulationProvider>
+    <ErrorBoundary>
+      <SimulationProvider>
+        <Game />
+      </SimulationProvider>
+    </ErrorBoundary>
+  );
+}
+
+/** Shown when WebGL is unavailable, before we ever try to create a context. */
+function WebGLUnavailable(): JSX.Element {
+  return (
+    <div className="fatal-screen" role="alert">
+      <div className="panel panel-narrow">
+        <h2>WebGL is required</h2>
+        <p>
+          This flight simulator needs WebGL, which isn&apos;t available in this browser. Try
+          enabling hardware acceleration or using an up-to-date browser.
+        </p>
+      </div>
+    </div>
   );
 }
 
 function Game(): JSX.Element {
   const { reset } = useSimulation();
   const { isTouch, isPortrait, deviceClass } = useDeviceClass();
+  // Detect WebGL once so we can show a clean message rather than a blank canvas.
+  const webglOk = useMemo(() => isWebGLAvailable(), []);
 
   const started = useStore((s) => s.started);
   const paused = useStore((s) => s.paused);
@@ -47,6 +67,8 @@ function Game(): JSX.Element {
   }, [reset, start]);
 
   const showPortraitHint = started && isTouch && deviceClass === 'phone' && isPortrait;
+
+  if (!webglOk) return <WebGLUnavailable />;
 
   return (
     <div className="app">

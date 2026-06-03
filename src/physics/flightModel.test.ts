@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { Vector3 } from 'three';
+import { Quaternion, Vector3 } from 'three';
 import type { ControlInput } from '../core/types';
-import { GEAR_HEIGHT, STALL_ANGLE } from '../config/constants';
+import { CEILING, GEAR_HEIGHT, STALL_ANGLE, WORLD_HALF_SIZE } from '../config/constants';
 import {
+  attitudeFromQuaternion,
   computeAngleOfAttack,
   createInitialAircraftState,
   createTelemetry,
@@ -138,6 +139,19 @@ describe('stepAircraft — crash detection', () => {
   });
 });
 
+describe('attitudeFromQuaternion', () => {
+  it('reports positive pitch when the nose is raised', () => {
+    const q = new Quaternion().setFromAxisAngle(new Vector3(1, 0, 0), 0.2);
+    expect(attitudeFromQuaternion(q).pitch).toBeGreaterThan(0);
+  });
+
+  it('reports negative roll for a left bank', () => {
+    // +Z rotation banks left in this body-frame convention.
+    const q = new Quaternion().setFromAxisAngle(new Vector3(0, 0, 1), 0.2);
+    expect(attitudeFromQuaternion(q).roll).toBeLessThan(0);
+  });
+});
+
 describe('deriveTelemetry', () => {
   it('reports knots-ready airspeed, altitude and heading', () => {
     const s = createInitialAircraftState();
@@ -149,5 +163,27 @@ describe('deriveTelemetry', () => {
     expect(t.altitude).toBeCloseTo(0, 5); // sitting at gear height = 0 AGL
     expect(t.heading).toBeGreaterThanOrEqual(0);
     expect(t.heading).toBeLessThan(360);
+  });
+
+  it('raises a boundary warning near the world edge or ceiling', () => {
+    const t = createTelemetry();
+
+    const edge = createInitialAircraftState();
+    edge.onGround = false;
+    edge.position.set(WORLD_HALF_SIZE * 0.95, 1000, 0);
+    deriveTelemetry(edge, t);
+    expect(t.boundaryWarning).toBe(true);
+
+    const ceiling = createInitialAircraftState();
+    ceiling.onGround = false;
+    ceiling.position.set(0, GEAR_HEIGHT + CEILING * 0.95, 0);
+    deriveTelemetry(ceiling, t);
+    expect(t.boundaryWarning).toBe(true);
+
+    const safe = createInitialAircraftState();
+    safe.onGround = false;
+    safe.position.set(0, GEAR_HEIGHT + 500, 0);
+    deriveTelemetry(safe, t);
+    expect(t.boundaryWarning).toBe(false);
   });
 });

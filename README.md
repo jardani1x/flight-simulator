@@ -150,9 +150,14 @@ src/
 - **Zero per-frame allocations** in the physics step and camera rig — module-level
   scratch vectors are reused.
 - **Adaptive graphics.** Quality presets bundle device-pixel-ratio caps, shadow
-  on/off, view distance, and instanced object counts. Defaults are chosen per
-  device class (phone→low, tablet→medium, desktop→high) and are user-overridable
-  and persisted to `localStorage`.
+  on/off, view distance, and instanced object counts. On first run the default is
+  chosen per device class (phone→low, tablet→medium, desktop→high); thereafter
+  the user's choice is respected and persisted to `localStorage`.
+- **Graceful failure.** WebGL is feature-detected up front (clean message if
+  unsupported) and an `ErrorBoundary` catches any render-time failure instead of
+  white-screening. The render loop runs on-demand in menus/pause to save battery.
+- **Recovery feedback.** Crash, stall, and airspace-boundary/ceiling conditions
+  each surface a clear HUD indicator, and reset is always one tap/key away.
 - **One draw call per scenery type** via `InstancedMesh` for clouds and
   landmarks, which matters most on mobile GPUs.
 
@@ -183,9 +188,10 @@ controls when slow), and a gentle weathervane term gives static stability.
 
 ## Testing
 
-- **Unit / physics (`npm test`)** — 32 tests covering the math helpers, angle of
-  attack, lift curve & stall, drag, takeoff, crash detection, telemetry, and the
-  simulation loop (reset, world bounds, ceiling).
+- **Unit / physics (`npm test`)** — 44 tests covering the math helpers, angle of
+  attack, lift curve & stall, drag, takeoff, crash detection, attitude
+  derivation, boundary warnings, telemetry, the simulation loop (reset, world
+  bounds, ceiling), input merging/sensitivity, and per-device quality defaults.
 - **Smoke (`npm test`)** — mounts the app (with the WebGL scene mocked) and
   verifies the menu, starting a flight, the HUD, and settings.
 - **End-to-end (`npm run test:e2e`)** — boots the real production build in

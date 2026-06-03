@@ -240,6 +240,27 @@ canvas {
   opacity: 1;
   animation: stall-blink 0.6s steps(2, start) infinite;
 }
+
+.hud-boundary {
+  position: absolute;
+  bottom: calc(max(16px, env(safe-area-inset-bottom)) + 150px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 160, 40, 0.92);
+  color: #2a1800;
+  font-family: var(--mono);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  font-size: clamp(0.7rem, 2.2vw, 0.9rem);
+  padding: 6px 14px;
+  border-radius: 8px;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.hud-boundary.visible {
+  opacity: 1;
+}
 @keyframes stall-blink {
   50% {
     opacity: 0.35;
@@ -568,6 +589,23 @@ canvas {
   .hud-throttle {
     display: none; /* throttle slider already on screen for touch */
   }
+}
+
+/* Fatal / WebGL-unavailable screen */
+.fatal-screen {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(ellipse at center, #0d1b2a, #060c14);
+  padding: 16px;
+  z-index: 100;
+}
+.fatal-detail {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  word-break: break-word;
 }
 
 @media (prefers-reduced-motion: reduce) {

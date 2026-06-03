@@ -25,6 +25,7 @@ interface DeviceInfo {
 /** Reactively track device class and orientation, syncing into the store. */
 export function useDeviceClass(): DeviceInfo {
   const setDeviceClass = useStore((s) => s.setDeviceClass);
+  const applyDeviceDefaults = useStore((s) => s.applyDeviceDefaults);
   const [info, setInfo] = useState<DeviceInfo>(() => {
     const deviceClass = detectDeviceClass();
     const isPortrait =
@@ -38,6 +39,8 @@ export function useDeviceClass(): DeviceInfo {
       const isPortrait = window.innerHeight > window.innerWidth;
       setInfo({ deviceClass, isTouch: deviceClass !== 'desktop', isPortrait });
       setDeviceClass(deviceClass);
+      // First-run only: pick a quality preset appropriate for this device.
+      applyDeviceDefaults(deviceClass);
     };
     update();
     window.addEventListener('resize', update);
@@ -46,7 +49,7 @@ export function useDeviceClass(): DeviceInfo {
       window.removeEventListener('resize', update);
       window.removeEventListener('orientationchange', update);
     };
-  }, [setDeviceClass]);
+  }, [setDeviceClass, applyDeviceDefaults]);
 
   return info;
 }

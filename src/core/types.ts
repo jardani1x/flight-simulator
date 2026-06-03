@@ -57,6 +57,8 @@ export interface Telemetry {
   crashed: boolean;
   /** Ground speed over the horizontal plane (m/s). */
   groundSpeed: number;
+  /** True when approaching the world edge or service ceiling. */
+  boundaryWarning: boolean;
 }
 
 export type GraphicsQuality = 'low' | 'medium' | 'high';

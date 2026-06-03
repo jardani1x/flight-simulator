@@ -9,6 +9,13 @@ vi.mock('./scene/SceneRoot', () => ({
   SceneRoot: () => null,
 }));
 
+// jsdom has no WebGL, so force the capability check to pass for the smoke test
+// while keeping the real ErrorBoundary implementation.
+vi.mock('./ui/ErrorBoundary', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./ui/ErrorBoundary')>();
+  return { ...actual, isWebGLAvailable: () => true };
+});
+
 afterEach(cleanup);
 
 describe('App smoke test', () => {
