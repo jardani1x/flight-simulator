@@ -1,14 +1,19 @@
 import { useEffect, useRef } from 'react';
-import { AttitudeIndicator } from './AttitudeIndicator';
+import { AttitudeIndicator, PITCH_PIXELS_PER_DEG } from './AttitudeIndicator';
 import { useSimulation } from '../scene/SimulationContext';
 import { perf } from '../scene/perf';
 import { useStore } from '../state/store';
 import { M_TO_FEET, MS_TO_FPM, MS_TO_KNOTS } from '../config/constants';
+import { radToDeg } from '../physics/mathUtils';
+
+/** Text readouts refresh at ~15 Hz; the eye can't read faster and it's cheaper. */
+const TEXT_INTERVAL_MS = 66;
 
 /**
- * Heads-up display. All numeric readouts are updated by a single rAF loop that
- * samples the live telemetry/perf objects and writes to DOM nodes via refs, so
- * the HUD never triggers React re-renders during flight.
+ * Heads-up display. A single rAF loop samples the live telemetry/perf objects:
+ * the (cheap) attitude transform updates every frame for smoothness, while the
+ * string-allocating numeric readouts are throttled. The HUD never triggers React
+ * re-renders during flight.
  */
 export function Hud(): JSX.Element {
   const { simulation } = useSimulation();
@@ -22,37 +27,52 @@ export function Hud(): JSX.Element {
   const throttleTextRef = useRef<HTMLSpanElement>(null);
   const stallRef = useRef<HTMLDivElement>(null);
   const fpsRef = useRef<HTMLSpanElement>(null);
+  const horizonRef = useRef<SVGGElement>(null);
 
   useEffect(() => {
     const t = simulation.telemetry;
     let rafId = 0;
+    let lastText = 0;
 
-    const update = () => {
-      if (airspeedRef.current) {
-        airspeedRef.current.textContent = Math.round(t.airspeed * MS_TO_KNOTS).toString();
+    const update = (now: number) => {
+      // Attitude indicator: update every frame (single cheap setAttribute).
+      const g = horizonRef.current;
+      if (g) {
+        const rollDeg = radToDeg(t.roll);
+        const offset = radToDeg(t.pitch) * PITCH_PIXELS_PER_DEG;
+        g.setAttribute('transform', `rotate(${-rollDeg} 60 60) translate(0 ${offset})`);
       }
-      if (altitudeRef.current) {
-        altitudeRef.current.textContent = Math.round(t.altitude * M_TO_FEET).toLocaleString();
+
+      // Numeric readouts: throttled.
+      if (now - lastText >= TEXT_INTERVAL_MS) {
+        lastText = now;
+        if (airspeedRef.current) {
+          airspeedRef.current.textContent = Math.round(t.airspeed * MS_TO_KNOTS).toString();
+        }
+        if (altitudeRef.current) {
+          altitudeRef.current.textContent = Math.round(t.altitude * M_TO_FEET).toLocaleString();
+        }
+        if (headingRef.current) {
+          headingRef.current.textContent = Math.round(t.heading).toString().padStart(3, '0');
+        }
+        if (vspeedRef.current) {
+          const fpm = Math.round(t.verticalSpeed * MS_TO_FPM);
+          vspeedRef.current.textContent = `${fpm > 0 ? '+' : ''}${fpm.toLocaleString()}`;
+        }
+        if (throttleFillRef.current) {
+          throttleFillRef.current.style.height = `${Math.round(t.throttle * 100)}%`;
+        }
+        if (throttleTextRef.current) {
+          throttleTextRef.current.textContent = `${Math.round(t.throttle * 100)}%`;
+        }
+        if (stallRef.current) {
+          stallRef.current.classList.toggle('visible', t.stalled);
+        }
+        if (showFps && fpsRef.current) {
+          fpsRef.current.textContent = `${Math.round(perf.fps)} fps`;
+        }
       }
-      if (headingRef.current) {
-        headingRef.current.textContent = Math.round(t.heading).toString().padStart(3, '0');
-      }
-      if (vspeedRef.current) {
-        const fpm = Math.round(t.verticalSpeed * MS_TO_FPM);
-        vspeedRef.current.textContent = `${fpm > 0 ? '+' : ''}${fpm.toLocaleString()}`;
-      }
-      if (throttleFillRef.current) {
-        throttleFillRef.current.style.height = `${Math.round(t.throttle * 100)}%`;
-      }
-      if (throttleTextRef.current) {
-        throttleTextRef.current.textContent = `${Math.round(t.throttle * 100)}%`;
-      }
-      if (stallRef.current) {
-        stallRef.current.classList.toggle('visible', t.stalled);
-      }
-      if (showFps && fpsRef.current) {
-        fpsRef.current.textContent = `${Math.round(perf.fps)} fps`;
-      }
+
       rafId = requestAnimationFrame(update);
     };
 
@@ -112,7 +132,7 @@ export function Hud(): JSX.Element {
 
       {/* Attitude indicator */}
       <div className="hud-attitude">
-        <AttitudeIndicator telemetry={simulation.telemetry} />
+        <AttitudeIndicator ref={horizonRef} />
       </div>
 
       {/* Stall warning */}

@@ -15,11 +15,18 @@ import { useStore } from '../state/store';
  */
 export function SceneRoot(): JSX.Element {
   const quality = useStore((s) => s.settings.graphicsQuality);
+  const started = useStore((s) => s.started);
+  const paused = useStore((s) => s.paused);
   const preset = QUALITY_PRESETS[quality];
+
+  // Only run the render loop continuously while actively flying. In the menu or
+  // when paused the scene is static, so render on demand to save battery/GPU.
+  const frameloop = started && !paused ? 'always' : 'demand';
 
   return (
     <Canvas
       key={quality}
+      frameloop={frameloop}
       shadows={preset.shadows}
       dpr={[1, preset.maxPixelRatio]}
       gl={{

@@ -1,6 +1,9 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef } from 'react';
 import { setAxis, setThrottle } from './inputState';
 import { clamp } from '../physics/mathUtils';
+
+/** Maximum knob travel from centre, in pixels. */
+const KNOB_TRAVEL = 42;
 
 /**
  * On-screen controls for touch devices: a left analog stick (roll + pitch), a
@@ -22,9 +25,10 @@ export function TouchControls(): JSX.Element {
 
 function Joystick(): JSX.Element {
   const baseRef = useRef<HTMLDivElement>(null);
-  const [knob, setKnob] = useState({ x: 0, y: 0 });
+  const knobRef = useRef<HTMLDivElement>(null);
   const activePointer = useRef<number | null>(null);
 
+  // Visuals are driven imperatively via refs so dragging never re-renders React.
   const updateFromEvent = useCallback((clientX: number, clientY: number) => {
     const base = baseRef.current;
     if (!base) return;
@@ -39,7 +43,9 @@ function Joystick(): JSX.Element {
       dx /= mag;
       dy /= mag;
     }
-    setKnob({ x: dx, y: dy });
+    if (knobRef.current) {
+      knobRef.current.style.transform = `translate(${dx * KNOB_TRAVEL}px, ${dy * KNOB_TRAVEL}px)`;
+    }
     setAxis('touch', 'roll', clamp(dx, -1, 1));
     // Drag up (negative dy) = nose up = positive pitch command.
     setAxis('touch', 'pitch', clamp(-dy, -1, 1));
@@ -47,7 +53,7 @@ function Joystick(): JSX.Element {
 
   const release = useCallback(() => {
     activePointer.current = null;
-    setKnob({ x: 0, y: 0 });
+    if (knobRef.current) knobRef.current.style.transform = 'translate(0px, 0px)';
     setAxis('touch', 'roll', 0);
     setAxis('touch', 'pitch', 0);
   }, []);
@@ -70,25 +76,24 @@ function Joystick(): JSX.Element {
       onPointerUp={release}
       onPointerCancel={release}
     >
-      <div
-        className="joystick-knob"
-        style={{ transform: `translate(${knob.x * 42}px, ${knob.y * 42}px)` }}
-      />
+      <div className="joystick-knob" ref={knobRef} />
     </div>
   );
 }
 
 function ThrottleSlider(): JSX.Element {
   const trackRef = useRef<HTMLDivElement>(null);
-  const [value, setValue] = useState(0);
+  const fillRef = useRef<HTMLDivElement>(null);
   const activePointer = useRef<number | null>(null);
 
+  // Update the fill and the ARIA value via refs (no re-render during drag).
   const updateFromEvent = useCallback((clientY: number) => {
     const track = trackRef.current;
     if (!track) return;
     const rect = track.getBoundingClientRect();
     const v = clamp(1 - (clientY - rect.top) / rect.height, 0, 1);
-    setValue(v);
+    if (fillRef.current) fillRef.current.style.height = `${v * 100}%`;
+    track.setAttribute('aria-valuenow', String(Math.round(v * 100)));
     setThrottle(v);
   }, []);
 
@@ -100,7 +105,7 @@ function ThrottleSlider(): JSX.Element {
       aria-label="Throttle"
       aria-valuemin={0}
       aria-valuemax={100}
-      aria-valuenow={Math.round(value * 100)}
+      aria-valuenow={0}
       tabIndex={0}
       onPointerDown={(e) => {
         activePointer.current = e.pointerId;
@@ -111,15 +116,14 @@ function ThrottleSlider(): JSX.Element {
         if (activePointer.current !== e.pointerId) return;
         updateFromEvent(e.clientY);
       }}
-      onPointerUp={(e) => {
+      onPointerUp={() => {
         activePointer.current = null;
-        void e;
       }}
       onPointerCancel={() => {
         activePointer.current = null;
       }}
     >
-      <div className="throttle-slider-fill" style={{ height: `${value * 100}%` }} />
+      <div className="throttle-slider-fill" ref={fillRef} style={{ height: '0%' }} />
       <span className="throttle-slider-label">THR</span>
     </div>
   );
