@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import { Group, Vector3 } from 'three';
 import { AircraftModel } from './AircraftModel';
 import { useSimulation } from './SimulationContext';
-import { readControlInput } from '../input/inputState';
+import { getBrake, readControlInput } from '../input/inputState';
 import { useStore } from '../state/store';
 import { recordFrame } from './perf';
 
@@ -30,18 +30,27 @@ const BODY_FORWARD = new Vector3(0, 0, -1);
  * the Three.js scene; it performs zero React state updates.
  */
 export function FlightRig(): JSX.Element {
-  const { simulation } = useSimulation();
+  const { simulation, director } = useSimulation();
   const groupRef = useRef<Group>(null);
   const camInitialised = useRef(false);
 
   useFrame((threeState, delta) => {
     recordFrame(delta);
 
-    const { started, paused } = useStore.getState();
-    const running = started && !paused && !simulation.state.crashed;
+    const { started, paused, mode } = useStore.getState();
+    const guided = mode === 'guided';
+    const missionComplete = guided && director.state.complete;
+    const running = started && !paused && !simulation.state.crashed && !missionComplete;
 
     if (running) {
       simulation.update(delta, readControlInput());
+      if (guided) {
+        director.update({
+          telemetry: simulation.telemetry,
+          state: simulation.state,
+          brake: getBrake(),
+        });
+      }
     }
 
     const group = groupRef.current;

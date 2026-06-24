@@ -5,8 +5,17 @@ An immersive, production-grade flight simulator that runs in the browser on
 generated world with believable lift/drag/stall physics, a responsive HUD, and
 controls for keyboard, touch, and gamepad — no external 3D assets required.
 
+**New to flight sims? Press _Start Flight_ for the guided tutorial.** A built-in
+flight director walks you through the entire beginner journey, step by step —
+pre-flight checklist, taxi to the runway, take-off, climb, navigating to a
+waypoint, turning back and a guided approach and landing — with plain-language
+prompts, a target heading bug, glowing 3D markers, a progress bar and live
+coaching. Prefer to just fly? **Free Flight** drops you straight into the
+sandbox.
+
 Built with **TypeScript · Vite · React · React Three Fiber (Three.js) ·
-Zustand**, tested with **Vitest** (physics/unit) and **Playwright** (e2e smoke).
+Zustand**, tested with **Vitest** (physics/unit + a real-physics flight
+integration test) and **Playwright** (e2e smoke).
 
 ---
 
@@ -17,8 +26,8 @@ npm install        # install dependencies
 npm run dev        # start the dev server (http://localhost:5173)
 ```
 
-Then open the printed URL, click **Start Flight**, add throttle and pull back to
-climb.
+Then open the printed URL and click **Start Flight** to begin the guided
+tutorial — just follow the on-screen prompts.
 
 ### All commands
 
@@ -57,6 +66,7 @@ Controls are also available in-app from the **?** button and the main-menu
 | `Q` / `E`        | Yaw left / right (rudder)   |
 | `Shift` / `Ctrl` | Throttle up / down          |
 | `X` / `Z`        | Throttle full / idle        |
+| `Space` / `B`    | Wheel brakes (hold)         |
 | `P` / `Esc`      | Pause / resume              |
 | `R`              | Reset flight                |
 | `H`              | Toggle the controls overlay |
@@ -65,6 +75,7 @@ Controls are also available in-app from the **?** button and the main-menu
 
 - **Left analog stick** — roll & pitch
 - **Right vertical slider** — throttle
+- **BRAKE button** — wheel brakes (hold)
 - **◄ ► buttons** — rudder (yaw)
 - **Top bar** — pause · reset · controls · settings
 
@@ -92,6 +103,35 @@ remains fully playable in portrait (a non-blocking hint is shown on phones).
 
 ---
 
+## Guided flight (beginner tutorial)
+
+Choosing **Start Flight** runs a step-by-step flight director. It is a small,
+pure state machine over the live telemetry — no scripted "rails", you actually
+fly the aircraft — that advances through these phases and only moves on once you
+have genuinely completed each one:
+
+1. **Pre-flight checklist** — brakes set, throttle idle; add a little throttle
+   when you are ready.
+2. **Taxi to the runway** — roll forward off the apron onto the runway.
+3. **Line up** — point down the runway and centre on the line.
+4. **Take off** — full throttle, rotate around 55 kt.
+5. **Climb** — climb to 1,000 ft without stalling.
+6. **Waypoint** — turn toward and fly through the glowing waypoint ring.
+7. **Turn back** — head back toward the airport and start down.
+8. **Final approach** — line up with the runway, reduce power and descend.
+9. **Land & stop** — flare, touch down softly and brake to a halt → **Mission
+   complete!**
+
+Throughout, the objective panel shows the current step, a one-line instruction,
+a progress bar, a live readout (speed/altitude/distance) and a **heading bug**
+that points at the current target. Glowing 3D markers (take-off aim beam,
+waypoint pillar, descending approach gates) reinforce the guidance, and short
+contextual hints react to what you are doing ("Full throttle", "Ease the bank",
+"Hold the brakes to stop", and stall/overspeed/boundary warnings). Everything is
+forgiving and you can **Reset** at any time.
+
+---
+
 ## Architecture
 
 The project deliberately separates **simulation**, **rendering**, **input**, and
@@ -105,9 +145,13 @@ src/
 ├── core/
 │   └── types.ts          # Shared interfaces (ControlInput, AircraftState, Telemetry)
 ├── physics/              # Pure simulation — no React, no Three.js rendering
-│   ├── mathUtils.ts      # clamp/lerp/damp/deadzone helpers (+ tests)
-│   ├── flightModel.ts    # Forces, lift/drag/stall, integration (+ tests)
+│   ├── mathUtils.ts      # clamp/lerp/damp/deadzone/bearing helpers (+ tests)
+│   ├── flightModel.ts    # Forces, lift/drag/stall, brakes, integration (+ tests)
 │   └── Simulation.ts     # Fixed-timestep loop, bounds/ceiling recovery (+ tests)
+├── mission/              # Guided beginner flight — pure, testable, no React
+│   ├── types.ts          # Phase/snapshot/state interfaces
+│   ├── missionPlan.ts    # World geometry + per-phase predicates (+ tests)
+│   └── FlightDirector.ts # Advances phases from live telemetry (+ tests)
 ├── input/                # Input sources -> one shared mutable ControlInput
 │   ├── inputState.ts     # Channel-merged input read every frame (no re-renders)
 │   ├── keymap.ts         # Key bindings (single source of truth)
@@ -121,15 +165,18 @@ src/
 │   ├── Terrain.tsx       # Ground, runway, instanced landmarks
 │   ├── Clouds.tsx        # Instanced cloud puffs
 │   ├── AircraftModel.tsx # Procedural aircraft mesh
-│   ├── FlightRig.tsx     # Drives the sim + chase camera in the frame loop
-│   ├── SimulationContext.tsx # Provides the Simulation instance + reset
+│   ├── MissionMarkers.tsx # Glowing guidance markers, pulsed by active phase
+│   ├── FlightRig.tsx     # Drives the sim + director + chase camera each frame
+│   ├── SimulationContext.tsx # Provides the Simulation + FlightDirector + reset
 │   └── perf.ts           # Shared FPS/frame-time metrics
 ├── hud/                  # Heads-up display (samples telemetry via refs)
 │   ├── Hud.tsx
 │   ├── AttitudeIndicator.tsx
-│   └── useSimEvents.ts   # Bridges crash events to React state
+│   ├── ObjectivePanel.tsx # Guided objective + heading bug (ref-driven)
+│   ├── useSimEvents.ts   # Bridges crash events to React state
+│   └── useMissionEvents.ts # Bridges mission-complete to React state
 ├── ui/                   # Menus & overlays
-│   ├── MainMenu.tsx · PauseMenu.tsx · CrashOverlay.tsx
+│   ├── MainMenu.tsx · PauseMenu.tsx · CrashOverlay.tsx · MissionCompleteOverlay.tsx
 │   ├── SettingsPanel.tsx · ControlsHelp.tsx · TopBar.tsx · OrientationHint.tsx
 ├── App.tsx               # Composition root
 └── main.tsx              # Entry point
@@ -188,12 +235,22 @@ controls when slow), and a gentle weathervane term gives static stability.
 
 ## Testing
 
-- **Unit / physics (`npm test`)** — 44 tests covering the math helpers, angle of
-  attack, lift curve & stall, drag, takeoff, crash detection, attitude
-  derivation, boundary warnings, telemetry, the simulation loop (reset, world
-  bounds, ceiling), input merging/sensitivity, and per-device quality defaults.
+- **Unit / physics (`npm test`)** — covers the math helpers (incl. bearings),
+  angle of attack, lift curve & stall, drag, **braking**, takeoff, crash
+  detection, attitude derivation, boundary warnings, telemetry, the simulation
+  loop (reset, world bounds, ceiling), input merging/sensitivity, per-device
+  quality defaults, and flight-mode state.
+- **Mission (`npm test`)** — drives the `FlightDirector` through every phase to
+  completion with synthetic telemetry, and verifies directional guidance.
+- **Real-physics flight integration (`npm test`)** — flies the _actual_
+  deterministic flight model through the director with a scripted autopilot:
+  one test taxis, takes off, climbs, navigates to the waypoint and turns back to
+  final approach; another flies a straight-in approach to a gentle touchdown and
+  full stop, asserting the mission completes. This guards the whole gameplay
+  path against regressions.
 - **Smoke (`npm test`)** — mounts the app (with the WebGL scene mocked) and
-  verifies the menu, starting a flight, the HUD, and settings.
+  verifies the menu's guided/free options, the HUD, the guided objective panel,
+  free-flight mode, and settings.
 - **End-to-end (`npm run test:e2e`)** — boots the real production build in
   Chromium on both a desktop and a mobile viewport, starts a flight, and asserts
   the WebGL canvas + HUD render with no page errors.
@@ -208,8 +265,15 @@ controls when slow), and a gentle weathervane term gives static stability.
   shadow camera); they fade out far from the runway. They are cosmetic and off by
   default below the `High` preset.
 - **Arcade-leaning aerodynamics.** The model is believable (real lift/drag/stall,
-  emergent banked turns) but simplified — no propeller torque, ground effect,
-  wind, or per-axis moments of inertia.
+  emergent banked turns, wheel braking) but simplified — no propeller torque,
+  ground effect, wind, or per-axis moments of inertia.
+- **Fixed-gear, no-flaps trainer.** The aircraft models a simple fixed-gear
+  trainer, so the guided flow does not include retracting gear or extending
+  flaps; landings are flown on pitch, power and brakes. (Adding flaps/retractable
+  gear is a natural future extension.)
+- **The guided approach is forgiving by design.** Completing the mission accepts
+  a safe landing near the runway rather than a pinpoint centre-line touchdown —
+  appropriate for a first flight.
 - **No audio** yet (see next steps).
 - The Three.js bundle is large (~176 kB gzipped); it is split into its own chunk
   for caching but is inherent to 3D in the browser.
@@ -221,10 +285,10 @@ controls when slow), and a gentle weathervane term gives static stability.
 - Real aircraft glTF models and liveries
 - Richer terrain (heightmaps, biomes, water shading) and landmarks
 - Weather: wind, turbulence, clouds you can fly through, time of day
-- Missions / objectives (takeoff, waypoints, landing challenges, scoring)
+- More guided missions / scenarios, scoring, and a landing-accuracy rating
 - Multiplayer
 - Fuller gamepad mapping & remappable controls
-- More advanced aerodynamics (ground effect, p-factor, flaps/gear)
+- More advanced aerodynamics (ground effect, p-factor, flaps/retractable gear)
 - Engine, wind, and stall-warning **audio**
 - Save/load progress and flight logbook
 

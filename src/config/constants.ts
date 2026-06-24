@@ -92,8 +92,20 @@ export const GROUND_LEVEL = 0;
 /** Height of the wheels below the aircraft origin (m) — the resting altitude. */
 export const GEAR_HEIGHT = 1.4;
 
-/** Rolling friction deceleration on the ground (m/s^2). */
-export const GROUND_FRICTION = 1.4;
+/**
+ * Rolling friction deceleration on the ground (m/s^2). Kept low so a small
+ * amount of throttle is enough to start taxiing (a beginner adding "a little
+ * throttle" should see the aircraft roll); the wheel brakes provide the strong
+ * stopping force for taxiing and the landing rollout.
+ */
+export const GROUND_FRICTION = 0.7;
+
+/**
+ * Additional wheel-braking deceleration at full brake (m/s^2), applied on top of
+ * rolling friction while on the ground. Lets the player slow during taxi and
+ * stop after landing.
+ */
+export const BRAKE_DECEL = 6.5;
 
 /** Sideways grip on the ground (1/s) — kills lateral drift so the plane tracks. */
 export const GROUND_LATERAL_GRIP = 3.0;
@@ -113,6 +125,27 @@ export const CEILING = 6000;
 /** Runway dimensions (m). */
 export const RUNWAY_LENGTH = 1400;
 export const RUNWAY_WIDTH = 45;
+
+/** Half the runway length (m) — the runway is centred on the world origin. */
+export const RUNWAY_HALF_LENGTH = RUNWAY_LENGTH / 2;
+
+/**
+ * World layout for the guided flight (metres). The aircraft spawns on a parking
+ * apron a short way behind the south runway threshold and taxis north (−Z) onto
+ * the runway. Keeping these in one place lets the spawn, the scenery markers and
+ * the mission director all agree on the geometry.
+ */
+/** South runway threshold (where the apron taxi joins the runway). */
+export const SOUTH_THRESHOLD_Z = RUNWAY_HALF_LENGTH; // +700
+/** North runway threshold (the far end / landing threshold). */
+export const NORTH_THRESHOLD_Z = -RUNWAY_HALF_LENGTH; // -700
+/** Aircraft spawn / apron position. */
+export const SPAWN_X = 0;
+export const SPAWN_Z = RUNWAY_HALF_LENGTH + 60; // +760, just behind the apron
+/** Hold-short line, where taxiing aircraft wait before entering the runway. */
+export const HOLD_SHORT_Z = RUNWAY_HALF_LENGTH + 14; // +714
+/** Line-up / take-off aiming point, a little way onto the runway. */
+export const LINEUP_Z = RUNWAY_HALF_LENGTH - 70; // +630
 
 // ---------------------------------------------------------------------------
 // Simulation loop

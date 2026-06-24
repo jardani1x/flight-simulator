@@ -30,6 +30,10 @@ export function ControlsReference(): JSX.Element {
             <dd>Throttle</dd>
           </div>
           <div className="control-row">
+            <dt>BRAKE button</dt>
+            <dd>Wheel brakes (hold)</dd>
+          </div>
+          <div className="control-row">
             <dt>◄ ► buttons</dt>
             <dd>Rudder (yaw)</dd>
           </div>

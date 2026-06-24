@@ -4,6 +4,7 @@ import { Sky } from './Sky';
 import { Terrain } from './Terrain';
 import { Clouds } from './Clouds';
 import { FlightRig } from './FlightRig';
+import { MissionMarkers } from './MissionMarkers';
 import { QUALITY_PRESETS } from '../config/quality';
 import { useStore } from '../state/store';
 
@@ -17,7 +18,9 @@ export function SceneRoot(): JSX.Element {
   const quality = useStore((s) => s.settings.graphicsQuality);
   const started = useStore((s) => s.started);
   const paused = useStore((s) => s.paused);
+  const mode = useStore((s) => s.mode);
   const preset = QUALITY_PRESETS[quality];
+  const showGuidance = started && mode === 'guided';
 
   // Only run the render loop continuously while actively flying. In the menu or
   // when paused the scene is static, so render on demand to save battery/GPU.
@@ -38,8 +41,10 @@ export function SceneRoot(): JSX.Element {
       camera={{
         fov: 60,
         near: 0.5,
+        // Behind the apron spawn so the menu frames the aircraft and runway
+        // before the flight rig snaps the chase camera into place.
         far: preset.viewDistance * 1.15,
-        position: [0, 8, 625],
+        position: [0, 9, 805],
       }}
       onCreated={({ gl }) => {
         gl.toneMapping = ACESFilmicToneMapping;
@@ -69,6 +74,7 @@ export function SceneRoot(): JSX.Element {
       <Sky radius={preset.viewDistance * 1.05} />
       <Terrain segments={preset.terrainSegments} landmarkCount={preset.landmarkCount} />
       <Clouds count={preset.cloudCount} />
+      {showGuidance && <MissionMarkers />}
       <FlightRig />
     </Canvas>
   );

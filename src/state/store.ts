@@ -3,6 +3,9 @@ import type { DeviceClass, GraphicsQuality } from '../core/types';
 
 const SETTINGS_STORAGE_KEY = 'skyward.settings.v1';
 
+/** How the player is flying: a guided beginner tutorial, or free sandbox. */
+export type FlightMode = 'guided' | 'free';
+
 export interface Settings {
   graphicsQuality: GraphicsQuality;
   /** Control sensitivity multiplier [0.3, 1.5]. */
@@ -16,6 +19,8 @@ export interface AppState {
   /** Whether the player has left the main menu and entered the cockpit. */
   started: boolean;
   paused: boolean;
+  /** Active flight mode (guided tutorial vs free flight). */
+  mode: FlightMode;
   /** Controls-help overlay visibility. */
   showHelp: boolean;
   settingsOpen: boolean;
@@ -25,7 +30,8 @@ export interface AppState {
   settingsHydrated: boolean;
 
   // actions
-  start: () => void;
+  start: (mode: FlightMode) => void;
+  setMode: (mode: FlightMode) => void;
   setPaused: (paused: boolean) => void;
   togglePause: () => void;
   toggleHelp: () => void;
@@ -90,13 +96,15 @@ export function defaultQualityForDevice(deviceClass: DeviceClass): GraphicsQuali
 export const useStore = create<AppState>((set, get) => ({
   started: false,
   paused: false,
+  mode: 'guided',
   showHelp: false,
   settingsOpen: false,
   deviceClass: 'desktop',
   settings: loadSettings(),
   settingsHydrated: hasPersistedSettings(),
 
-  start: () => set({ started: true, paused: false }),
+  start: (mode) => set({ started: true, paused: false, mode }),
+  setMode: (mode) => set({ mode }),
   setPaused: (paused) => set({ paused }),
   togglePause: () => set((s) => ({ paused: !s.paused })),
   toggleHelp: () => set((s) => ({ showHelp: !s.showHelp })),

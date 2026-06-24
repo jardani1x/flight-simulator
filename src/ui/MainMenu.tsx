@@ -1,11 +1,12 @@
 import { useStore } from '../state/store';
+import type { FlightMode } from '../state/store';
 import { ControlsReference } from './ControlsHelp';
 
 interface MainMenuProps {
-  onStart: () => void;
+  onStart: (mode: FlightMode) => void;
 }
 
-/** Opening screen: title, start button and a controls primer. */
+/** Opening screen: title, guided/free start options and a controls primer. */
 export function MainMenu({ onStart }: MainMenuProps): JSX.Element {
   const setSettingsOpen = useStore((s) => s.setSettingsOpen);
   const deviceClass = useStore((s) => s.deviceClass);
@@ -17,8 +18,19 @@ export function MainMenu({ onStart }: MainMenuProps): JSX.Element {
         <p className="subtitle">Web Flight Simulator</p>
 
         <div className="menu-buttons">
-          <button type="button" className="btn btn-primary btn-large" onClick={onStart}>
+          <button
+            type="button"
+            className="btn btn-primary btn-large"
+            onClick={() => onStart('guided')}
+          >
             ▶ Start Flight
+          </button>
+          <p className="menu-mode-note">
+            Guided tutorial — we&apos;ll walk you through taxi, take-off, flying and landing,
+            step&nbsp;by&nbsp;step.
+          </p>
+          <button type="button" className="btn" onClick={() => onStart('free')}>
+            ✈ Free Flight
           </button>
           <button type="button" className="btn" onClick={() => setSettingsOpen(true)}>
             ⚙ Settings
@@ -27,8 +39,8 @@ export function MainMenu({ onStart }: MainMenuProps): JSX.Element {
 
         <p className="hint">
           {deviceClass === 'desktop'
-            ? 'Tip: hold Shift to add throttle, then pull back (S / ↑) to climb.'
-            : 'Tip: slide the throttle up, then pull the stick back to climb. Landscape recommended.'}
+            ? 'New here? Choose Start Flight and just follow the on-screen prompts.'
+            : 'New here? Tap Start Flight and follow the prompts. Landscape recommended.'}
         </p>
 
         <details className="menu-controls">
