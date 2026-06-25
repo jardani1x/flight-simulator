@@ -14,7 +14,7 @@ import {
   stepAircraft,
 } from './flightModel';
 
-const NEUTRAL: ControlInput = { pitch: 0, roll: 0, yaw: 0, throttle: 0 };
+const NEUTRAL: ControlInput = { pitch: 0, roll: 0, yaw: 0, throttle: 0, brake: 0 };
 const ctrl = (p: Partial<ControlInput>): ControlInput => ({ ...NEUTRAL, ...p });
 
 describe('createInitialAircraftState', () => {
@@ -92,6 +92,30 @@ describe('stepAircraft — takeoff', () => {
     expect(s.velocity.length()).toBeGreaterThan(25);
     expect(s.onGround).toBe(false);
     expect(s.position.y).toBeGreaterThan(GEAR_HEIGHT + 1);
+  });
+});
+
+describe('stepAircraft — braking', () => {
+  it('stops the aircraft on the ground faster with brakes than rolling alone', () => {
+    const makeRolling = () => {
+      const s = createInitialAircraftState();
+      s.velocity.set(0, 0, -12); // taxiing forward at 12 m/s
+      return s;
+    };
+    const dt = 1 / 120;
+
+    const coasting = makeRolling();
+    for (let i = 0; i < 240; i++) stepAircraft(coasting, NEUTRAL, dt);
+
+    const braking = makeRolling();
+    for (let i = 0; i < 240; i++) stepAircraft(braking, ctrl({ brake: 1 }), dt);
+
+    const coastSpeed = Math.hypot(coasting.velocity.x, coasting.velocity.z);
+    const brakeSpeed = Math.hypot(braking.velocity.x, braking.velocity.z);
+    expect(brakeSpeed).toBeLessThan(coastSpeed); // brakes win
+    expect(brakeSpeed).toBeLessThan(0.5); // ~stopped within 2 s
+    expect(coastSpeed).toBeGreaterThan(5); // rolling friction alone is gentle
+    expect(braking.crashed).toBe(false);
   });
 });
 

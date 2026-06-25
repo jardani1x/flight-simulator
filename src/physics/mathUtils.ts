@@ -40,6 +40,27 @@ export function wrapHeading(deg: number): number {
   return wrapped < 0 ? wrapped + 360 : wrapped;
 }
 
+/**
+ * Compass bearing in degrees [0, 360) of a horizontal direction vector (dx, dz),
+ * matching the sim's heading convention where 0° faces −Z (north) and bearing
+ * increases clockwise (turning right / toward +X / east).
+ */
+export function bearingDegrees(dx: number, dz: number): number {
+  if (dx === 0 && dz === 0) return 0;
+  return wrapHeading((Math.atan2(dx, -dz) * 180) / Math.PI);
+}
+
+/**
+ * Shortest signed turn (degrees) to get from heading `from` to heading `to`,
+ * in the range [-180, 180]. Negative means turn left, positive means turn right.
+ */
+export function signedHeadingDelta(from: number, to: number): number {
+  let d = (to - from) % 360;
+  if (d > 180) d -= 360;
+  if (d < -180) d += 360;
+  return d;
+}
+
 /** Map `value` from [inMin, inMax] to [outMin, outMax] (no clamping). */
 export function mapRange(
   value: number,

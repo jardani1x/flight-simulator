@@ -34,6 +34,20 @@ describe('applyDeviceDefaults', () => {
   });
 });
 
+describe('flight mode', () => {
+  it('defaults to guided and starts in the chosen mode', () => {
+    useStore.setState({ started: false, mode: 'guided' });
+    expect(useStore.getState().mode).toBe('guided');
+
+    useStore.getState().start('free');
+    expect(useStore.getState().started).toBe(true);
+    expect(useStore.getState().mode).toBe('free');
+
+    useStore.getState().setMode('guided');
+    expect(useStore.getState().mode).toBe('guided');
+  });
+});
+
 describe('settings persistence', () => {
   it('persists updates to localStorage', () => {
     useStore.getState().updateSettings({ sensitivity: 0.7 });

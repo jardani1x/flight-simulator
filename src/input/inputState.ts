@@ -23,8 +23,11 @@ const gamepadChannel: Channel = { pitch: 0, roll: 0, yaw: 0 };
 /** Absolute throttle, owned globally because all sources set it as a target. */
 let throttle = 0;
 
+/** Wheel-brake target [0, 1], owned globally like throttle. */
+let brake = 0;
+
 /** The merged, clamped control input read by the simulation. */
-const merged: ControlInput = { pitch: 0, roll: 0, yaw: 0, throttle: 0 };
+const merged: ControlInput = { pitch: 0, roll: 0, yaw: 0, throttle: 0, brake: 0 };
 
 export type InputChannel = 'keyboard' | 'touch' | 'gamepad';
 
@@ -53,13 +56,23 @@ export function getThrottle(): number {
   return throttle;
 }
 
-/** Zero every channel — used on reset / when controls are released. */
+/** Set the absolute wheel-brake target [0, 1]. */
+export function setBrake(value: number): void {
+  brake = clamp(value, 0, 1);
+}
+
+export function getBrake(): number {
+  return brake;
+}
+
+/** Zero every axis channel and the brakes — used on reset / control release. */
 export function resetInput(): void {
   for (const key of Object.keys(channels) as InputChannel[]) {
     channels[key].pitch = 0;
     channels[key].roll = 0;
     channels[key].yaw = 0;
   }
+  brake = 0;
 }
 
 /**
@@ -80,5 +93,6 @@ export function readControlInput(): ControlInput {
   merged.roll = clamp(roll * sensitivity, -1, 1);
   merged.yaw = clamp(yaw * sensitivity, -1, 1);
   merged.throttle = throttle;
+  merged.brake = brake;
   return merged;
 }

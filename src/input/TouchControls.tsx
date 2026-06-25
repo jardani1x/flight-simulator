@@ -1,5 +1,5 @@
 import { useCallback, useRef } from 'react';
-import { setAxis, setThrottle } from './inputState';
+import { setAxis, setBrake, setThrottle } from './inputState';
 import { clamp } from '../physics/mathUtils';
 
 /** Maximum knob travel from centre, in pixels. */
@@ -17,9 +17,30 @@ export function TouchControls(): JSX.Element {
       <Joystick />
       <div className="touch-right">
         <ThrottleSlider />
-        <RudderButtons />
+        <div className="touch-right-stack">
+          <BrakeButton />
+          <RudderButtons />
+        </div>
       </div>
     </div>
+  );
+}
+
+function BrakeButton(): JSX.Element {
+  const press = () => setBrake(1);
+  const release = () => setBrake(0);
+  return (
+    <button
+      type="button"
+      className="brake-btn"
+      aria-label="Wheel brakes"
+      onPointerDown={press}
+      onPointerUp={release}
+      onPointerLeave={release}
+      onPointerCancel={release}
+    >
+      ✦ BRAKE
+    </button>
   );
 }
 

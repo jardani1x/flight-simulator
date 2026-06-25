@@ -13,6 +13,8 @@ export interface ControlInput {
   yaw: number;
   /** Absolute throttle setting in [0, 1]. */
   throttle: number;
+  /** Wheel brakes in [0, 1]; only effective on the ground. */
+  brake: number;
 }
 
 /** Mutable physical state of the aircraft, integrated by the flight model. */

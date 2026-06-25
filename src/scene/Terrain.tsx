@@ -1,6 +1,14 @@
 import { useLayoutEffect, useMemo, useRef } from 'react';
 import { Color, InstancedMesh, Object3D, PlaneGeometry } from 'three';
-import { RUNWAY_LENGTH, RUNWAY_WIDTH, WORLD_HALF_SIZE } from '../config/constants';
+import {
+  HOLD_SHORT_Z,
+  LINEUP_Z,
+  RUNWAY_LENGTH,
+  RUNWAY_WIDTH,
+  SOUTH_THRESHOLD_Z,
+  SPAWN_Z,
+  WORLD_HALF_SIZE,
+} from '../config/constants';
 
 /** Tiny deterministic PRNG (mulberry32) for stable scenery placement. */
 function makeRng(seed: number): () => number {
@@ -89,6 +97,9 @@ export function Terrain({ segments, landmarkCount }: TerrainProps): JSX.Element 
         <meshStandardMaterial color="#2c2f33" roughness={0.95} />
       </mesh>
 
+      {/* Parking apron + taxi guidance behind the south threshold */}
+      <Apron />
+
       {/* Runway centreline dashes */}
       <RunwayCentreline />
 
@@ -106,6 +117,42 @@ export function Terrain({ segments, landmarkCount }: TerrainProps): JSX.Element 
         <coneGeometry args={[1, 1, 6]} />
         <meshStandardMaterial vertexColors roughness={0.9} />
       </instancedMesh>
+    </group>
+  );
+}
+
+/**
+ * Parking apron behind the south threshold plus a yellow taxi lead-in line and a
+ * hold-short line, so the guided taxi from the apron onto the runway reads
+ * clearly even without a full taxiway network.
+ */
+function Apron(): JSX.Element {
+  const apronCentreZ = (SOUTH_THRESHOLD_Z + 8 + (SPAWN_Z + 45)) / 2;
+  const apronLength = SPAWN_Z + 45 - (SOUTH_THRESHOLD_Z + 8);
+  const leadInCentreZ = (LINEUP_Z + SPAWN_Z + 40) / 2;
+  const leadInLength = SPAWN_Z + 40 - LINEUP_Z;
+
+  return (
+    <group>
+      {/* Apron pad */}
+      <mesh position={[0, 0.04, apronCentreZ]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[RUNWAY_WIDTH + 16, apronLength]} />
+        <meshStandardMaterial color="#3a4047" roughness={0.95} />
+      </mesh>
+
+      {/* Yellow taxi lead-in line from the apron to the line-up point */}
+      <mesh position={[0, 0.08, leadInCentreZ]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[0.9, leadInLength]} />
+        <meshStandardMaterial color="#e6c200" roughness={0.7} />
+      </mesh>
+
+      {/* Hold-short line (double yellow bar across the taxiway) */}
+      {[HOLD_SHORT_Z, HOLD_SHORT_Z + 2].map((z) => (
+        <mesh key={z} position={[0, 0.09, z]} rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[16, 0.7]} />
+          <meshStandardMaterial color="#e6c200" roughness={0.7} />
+        </mesh>
+      ))}
     </group>
   );
 }

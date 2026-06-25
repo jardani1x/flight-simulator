@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { applyDeadzone, clamp, damp, lerp, mapRange, wrapHeading } from './mathUtils';
+import {
+  applyDeadzone,
+  bearingDegrees,
+  clamp,
+  damp,
+  lerp,
+  mapRange,
+  signedHeadingDelta,
+  wrapHeading,
+} from './mathUtils';
 
 describe('clamp', () => {
   it('bounds values to the range', () => {
@@ -51,6 +60,27 @@ describe('mapRange', () => {
   });
   it('returns outMin when the input range is degenerate', () => {
     expect(mapRange(5, 2, 2, 7, 9)).toBe(7);
+  });
+});
+
+describe('bearingDegrees', () => {
+  it('matches the sim heading convention (0=north/−Z, CW positive)', () => {
+    expect(bearingDegrees(0, -1)).toBeCloseTo(0, 5); // north
+    expect(bearingDegrees(1, 0)).toBeCloseTo(90, 5); // east
+    expect(bearingDegrees(0, 1)).toBeCloseTo(180, 5); // south
+    expect(bearingDegrees(-1, 0)).toBeCloseTo(270, 5); // west
+  });
+  it('returns 0 for a zero vector', () => {
+    expect(bearingDegrees(0, 0)).toBe(0);
+  });
+});
+
+describe('signedHeadingDelta', () => {
+  it('returns the shortest signed turn in [-180, 180]', () => {
+    expect(signedHeadingDelta(350, 10)).toBeCloseTo(20, 5); // turn right across 0
+    expect(signedHeadingDelta(10, 350)).toBeCloseTo(-20, 5); // turn left across 0
+    expect(signedHeadingDelta(0, 90)).toBeCloseTo(90, 5);
+    expect(Math.abs(signedHeadingDelta(0, 180))).toBeCloseTo(180, 5);
   });
 });
 

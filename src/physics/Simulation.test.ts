@@ -3,7 +3,7 @@ import type { ControlInput } from '../core/types';
 import { CEILING, GEAR_HEIGHT, WORLD_HALF_SIZE } from '../config/constants';
 import { Simulation } from './Simulation';
 
-const NEUTRAL: ControlInput = { pitch: 0, roll: 0, yaw: 0, throttle: 0 };
+const NEUTRAL: ControlInput = { pitch: 0, roll: 0, yaw: 0, throttle: 0, brake: 0 };
 
 describe('Simulation', () => {
   it('advances the aircraft when throttle is applied', () => {

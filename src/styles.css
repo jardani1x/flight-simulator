@@ -568,6 +568,147 @@ canvas {
   height: clamp(96px, 22vw, 130px);
 }
 
+/* ----------------------------------------------- Objective / guidance */
+.objective {
+  position: absolute;
+  top: calc(max(12px, env(safe-area-inset-top)) + 88px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(460px, 94vw);
+  z-index: 19;
+  pointer-events: none;
+  background: rgba(8, 16, 26, 0.74);
+  border: 1px solid rgba(76, 194, 255, 0.35);
+  border-radius: 12px;
+  padding: 9px 14px 11px;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(6px);
+}
+.objective-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.objective-step {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  color: #04222f;
+  background: linear-gradient(180deg, var(--accent), var(--accent-strong));
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.objective-title {
+  font-size: clamp(1rem, 3.2vw, 1.18rem);
+  font-weight: 700;
+  color: var(--text);
+}
+.objective-instruction {
+  margin: 0 0 8px;
+  font-size: clamp(0.8rem, 2.3vw, 0.92rem);
+  line-height: 1.32;
+  color: var(--text-dim);
+}
+.objective-progress {
+  height: 7px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.objective-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--hud), var(--accent));
+  border-radius: 999px;
+  transition: width 0.18s ease;
+}
+.objective-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 7px;
+  min-height: 20px;
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  color: var(--hud);
+}
+.objective-target {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--accent);
+}
+.objective-bug {
+  display: block;
+  color: var(--accent);
+  transition: transform 0.12s linear;
+  filter: drop-shadow(0 0 4px rgba(76, 194, 255, 0.6));
+}
+.objective-hint {
+  margin: 6px 0 0;
+  font-size: clamp(0.76rem, 2.2vw, 0.88rem);
+  line-height: 1.3;
+  color: var(--hud);
+  min-height: 1.1em;
+}
+.objective-hint.warn {
+  color: #ffd34d;
+  font-weight: 600;
+}
+.menu-mode-note {
+  margin: -4px 2px 4px;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--text-dim);
+}
+
+/* Mission complete */
+.complete-panel {
+  text-align: center;
+}
+.complete-panel h2 {
+  color: var(--hud);
+  margin-bottom: 0.3em;
+}
+.complete-badge {
+  font-size: 2.6rem;
+  line-height: 1;
+  margin-bottom: 6px;
+  filter: drop-shadow(0 0 12px rgba(111, 240, 200, 0.6));
+}
+
+/* Brakes (touch) */
+.touch-right-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  pointer-events: none;
+}
+.brake-btn {
+  align-self: stretch;
+  padding: 10px 8px;
+  border-radius: 14px;
+  border: 2px solid rgba(255, 180, 80, 0.5);
+  background: rgba(40, 26, 10, 0.55);
+  color: #ffd9a3;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  pointer-events: auto;
+  touch-action: none;
+  cursor: pointer;
+}
+.brake-btn:active {
+  background: rgba(255, 150, 40, 0.85);
+  color: #2a1800;
+}
+
 /* ---------------------------------------------------- Responsive tweaks */
 @media (max-width: 640px) {
   .controls-reference {
@@ -588,6 +729,14 @@ canvas {
   }
   .hud-throttle {
     display: none; /* throttle slider already on screen for touch */
+  }
+  .objective {
+    top: calc(max(8px, env(safe-area-inset-top)) + 58px);
+    width: min(380px, 70vw);
+    padding: 6px 11px 8px;
+  }
+  .objective-instruction {
+    display: none; /* keep only step/title/hint when vertical space is tight */
   }
 }
 

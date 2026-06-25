@@ -4,6 +4,7 @@ import {
   AERO_STABILITY,
   AIRCRAFT_MASS,
   AIR_DENSITY,
+  BRAKE_DECEL,
   CEILING,
   CONTROL_AUTHORITY_SPEED,
   CONTROL_RESPONSIVENESS,
@@ -21,6 +22,8 @@ import {
   MAX_ROLL_RATE,
   MAX_YAW_RATE,
   MAX_THRUST,
+  SPAWN_X,
+  SPAWN_Z,
   STALL_ANGLE,
   STALL_BLEND_RANGE,
   STALL_LIFT_FLOOR,
@@ -51,12 +54,12 @@ const _horizVel = new Vector3();
 const BODY_FORWARD = new Vector3(0, 0, -1);
 const BODY_RIGHT = new Vector3(1, 0, 0);
 
-/** Create a fresh aircraft state sitting on the runway threshold, engine idle. */
+/** Create a fresh aircraft state sitting on the parking apron, engine idle. */
 export function createInitialAircraftState(): AircraftState {
   return {
-    position: new Vector3(0, GROUND_LEVEL + GEAR_HEIGHT, 600),
+    position: new Vector3(SPAWN_X, GROUND_LEVEL + GEAR_HEIGHT, SPAWN_Z),
     velocity: new Vector3(0, 0, 0),
-    orientation: new Quaternion(), // facing -Z (north / down the runway)
+    orientation: new Quaternion(), // facing -Z (north, toward the runway)
     angularVelocity: new Vector3(0, 0, 0),
     throttle: 0,
     onGround: true,
@@ -151,7 +154,7 @@ export function stepAircraft(state: AircraftState, input: ControlInput, dt: numb
   integrateRotation(state, input, airspeed, aoa, dt);
 
   // --- Ground interaction -------------------------------------------------
-  handleGround(state, dt);
+  handleGround(state, input, dt);
 }
 
 /**
@@ -196,8 +199,8 @@ function integrateRotation(
   }
 }
 
-/** Resolve ground contact: crashes, wheel snapping, friction and lateral grip. */
-function handleGround(state: AircraftState, dt: number): void {
+/** Resolve ground contact: crashes, wheel snapping, friction, brakes and grip. */
+function handleGround(state: AircraftState, input: ControlInput, dt: number): void {
   const restY = GROUND_LEVEL + GEAR_HEIGHT;
   const airborne = state.position.y > restY + 1e-3;
 
@@ -226,11 +229,13 @@ function handleGround(state: AircraftState, dt: number): void {
   if (state.velocity.y < 0) state.velocity.y = 0;
   state.onGround = true;
 
-  // Rolling resistance along the forward direction.
+  // Rolling resistance plus optional wheel braking along the forward direction.
   _horizVel.set(state.velocity.x, 0, state.velocity.z);
   const groundSpeed = _horizVel.length();
   if (groundSpeed > 1e-3) {
-    const decel = Math.min(GROUND_FRICTION * dt, groundSpeed);
+    const brake = clamp(input.brake, 0, 1);
+    const decelRate = GROUND_FRICTION + brake * BRAKE_DECEL;
+    const decel = Math.min(decelRate * dt, groundSpeed);
     _horizVel.multiplyScalar((groundSpeed - decel) / groundSpeed);
   }
 

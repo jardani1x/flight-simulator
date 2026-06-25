@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { KEYS } from './keymap';
-import { nudgeThrottle, setAxis, setThrottle } from './inputState';
+import { nudgeThrottle, setAxis, setBrake, setThrottle } from './inputState';
 import { THROTTLE_RATE } from '../config/constants';
 import { useStore } from '../state/store';
 
@@ -34,6 +34,7 @@ export function useKeyboard(handlers: DiscreteHandlers): void {
       let pitch = 0;
       let roll = 0;
       let yaw = 0;
+      let braking = false;
 
       for (const code of held) {
         if (isAny(code, KEYS.pitchUp)) pitch += 1;
@@ -44,11 +45,13 @@ export function useKeyboard(handlers: DiscreteHandlers): void {
         if (isAny(code, KEYS.yawRight)) yaw += 1;
         if (isAny(code, KEYS.throttleUp)) nudgeThrottle(THROTTLE_RATE * dt);
         if (isAny(code, KEYS.throttleDown)) nudgeThrottle(-THROTTLE_RATE * dt);
+        if (isAny(code, KEYS.brake)) braking = true;
       }
 
       setAxis('keyboard', 'pitch', pitch);
       setAxis('keyboard', 'roll', roll);
       setAxis('keyboard', 'yaw', yaw);
+      setBrake(braking ? 1 : 0);
 
       rafId = requestAnimationFrame(updateAxes);
     };
@@ -89,7 +92,8 @@ export function useKeyboard(handlers: DiscreteHandlers): void {
         isAny(code, KEYS.pitchUp) ||
         isAny(code, KEYS.pitchDown) ||
         isAny(code, KEYS.rollLeft) ||
-        isAny(code, KEYS.rollRight)
+        isAny(code, KEYS.rollRight) ||
+        isAny(code, KEYS.brake)
       ) {
         e.preventDefault();
       }
@@ -105,6 +109,7 @@ export function useKeyboard(handlers: DiscreteHandlers): void {
       setAxis('keyboard', 'pitch', 0);
       setAxis('keyboard', 'roll', 0);
       setAxis('keyboard', 'yaw', 0);
+      setBrake(0);
     };
 
     window.addEventListener('keydown', onKeyDown);
