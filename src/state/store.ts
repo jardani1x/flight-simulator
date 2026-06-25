@@ -13,6 +13,8 @@ export interface Settings {
   invertPitch: boolean;
   /** Show the FPS / debug overlay. */
   showFps: boolean;
+  /** Id of the selected aircraft from the fleet. */
+  aircraftId: string;
 }
 
 export interface AppState {
@@ -24,6 +26,8 @@ export interface AppState {
   /** Controls-help overlay visibility. */
   showHelp: boolean;
   settingsOpen: boolean;
+  /** Aircraft-selection (hangar) overlay visibility. */
+  hangarOpen: boolean;
   deviceClass: DeviceClass;
   settings: Settings;
   /** True once settings have been loaded from storage or device defaults applied. */
@@ -37,6 +41,9 @@ export interface AppState {
   toggleHelp: () => void;
   setShowHelp: (show: boolean) => void;
   setSettingsOpen: (open: boolean) => void;
+  setHangarOpen: (open: boolean) => void;
+  /** Select an aircraft from the fleet (persisted). */
+  setAircraft: (id: string) => void;
   setDeviceClass: (deviceClass: DeviceClass) => void;
   updateSettings: (patch: Partial<Settings>) => void;
   /** Apply a device-appropriate default quality on first run only. */
@@ -48,6 +55,7 @@ const DEFAULT_SETTINGS: Settings = {
   sensitivity: 1,
   invertPitch: false,
   showFps: false,
+  aircraftId: 'a320',
 };
 
 function loadSettings(): Settings {
@@ -99,6 +107,7 @@ export const useStore = create<AppState>((set, get) => ({
   mode: 'guided',
   showHelp: false,
   settingsOpen: false,
+  hangarOpen: false,
   deviceClass: 'desktop',
   settings: loadSettings(),
   settingsHydrated: hasPersistedSettings(),
@@ -110,6 +119,12 @@ export const useStore = create<AppState>((set, get) => ({
   toggleHelp: () => set((s) => ({ showHelp: !s.showHelp })),
   setShowHelp: (show) => set({ showHelp: show }),
   setSettingsOpen: (open) => set({ settingsOpen: open }),
+  setHangarOpen: (open) => set({ hangarOpen: open }),
+  setAircraft: (id) => {
+    const next = { ...get().settings, aircraftId: id };
+    persistSettings(next);
+    set({ settings: next, settingsHydrated: true });
+  },
   setDeviceClass: (deviceClass) => set({ deviceClass }),
   updateSettings: (patch) => {
     const next = { ...get().settings, ...patch };

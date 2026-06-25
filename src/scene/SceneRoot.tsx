@@ -1,10 +1,12 @@
 import { Canvas } from '@react-three/fiber';
+import { Environment, Lightformer } from '@react-three/drei';
 import { ACESFilmicToneMapping } from 'three';
 import { Sky } from './Sky';
 import { Terrain } from './Terrain';
 import { Clouds } from './Clouds';
 import { FlightRig } from './FlightRig';
 import { MissionMarkers } from './MissionMarkers';
+import { Effects } from './Effects';
 import { QUALITY_PRESETS } from '../config/quality';
 import { useStore } from '../state/store';
 
@@ -48,21 +50,23 @@ export function SceneRoot(): JSX.Element {
       }}
       onCreated={({ gl }) => {
         gl.toneMapping = ACESFilmicToneMapping;
-        gl.toneMappingExposure = 1.05;
+        gl.toneMappingExposure = 1.1;
       }}
     >
       {/* Atmosphere: linear fog fading to the horizon colour. */}
       <fog attach="fog" args={['#bcd9f2', preset.viewDistance * 0.45, preset.viewDistance]} />
 
       {/* Lighting: a warm sun plus sky/ground ambient bounce. */}
-      <hemisphereLight args={['#bcd9f2', '#3f6b3a', 0.7]} />
+      <hemisphereLight args={['#cfe3f5', '#41663c', 0.55]} />
+      <ambientLight intensity={0.12} />
       <directionalLight
         position={[800, 1200, 400]}
-        intensity={2.2}
-        color="#fff4e0"
+        intensity={2.7}
+        color="#fff3da"
         castShadow={preset.shadows}
-        shadow-mapSize-width={1024}
-        shadow-mapSize-height={1024}
+        shadow-mapSize-width={2048}
+        shadow-mapSize-height={2048}
+        shadow-bias={-0.0004}
         shadow-camera-near={1}
         shadow-camera-far={3000}
         shadow-camera-left={-400}
@@ -71,11 +75,30 @@ export function SceneRoot(): JSX.Element {
         shadow-camera-bottom={-400}
       />
 
+      {/* Image-based lighting for believable metal/glass reflections (no asset:
+          a procedural sky/sun/ground rig built from light cards). */}
+      {preset.environment && (
+        <Environment resolution={256} frames={1}>
+          <Lightformer intensity={2.2} color="#fff4e0" position={[0, 8, -12]} scale={[14, 14, 1]} />
+          <Lightformer intensity={0.7} color="#bcd9f2" position={[-12, 4, 6]} scale={[10, 10, 1]} />
+          <Lightformer intensity={0.5} color="#d8e8f6" position={[12, 3, 6]} scale={[10, 10, 1]} />
+          <Lightformer
+            intensity={0.6}
+            color="#41663c"
+            position={[0, -8, 0]}
+            scale={[30, 30, 1]}
+            rotation={[Math.PI / 2, 0, 0]}
+          />
+        </Environment>
+      )}
+
       <Sky radius={preset.viewDistance * 1.05} />
       <Terrain segments={preset.terrainSegments} landmarkCount={preset.landmarkCount} />
       <Clouds count={preset.cloudCount} />
       {showGuidance && <MissionMarkers />}
       <FlightRig />
+
+      {preset.postFx && <Effects />}
     </Canvas>
   );
 }

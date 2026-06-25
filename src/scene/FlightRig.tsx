@@ -2,16 +2,15 @@ import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Group, Vector3 } from 'three';
 import { AircraftModel } from './AircraftModel';
+import { getAircraftDef } from './aircraft/fleet';
 import { useSimulation } from './SimulationContext';
 import { getBrake, readControlInput } from '../input/inputState';
 import { useStore } from '../state/store';
 import { recordFrame } from './perf';
 
-// Chase-camera tuning.
-const CAM_DISTANCE = 20; // metres behind the aircraft
-const CAM_HEIGHT = 7; // metres above the aircraft
-const CAM_LOOK_AHEAD = 12; // metres ahead of the aircraft to aim at
-const CAM_SMOOTH = 6; // follow responsiveness (1/s)
+// Chase-camera follow responsiveness (1/s). Distance/height/look-ahead are
+// per-aircraft (a jumbo needs a wider framing than a narrow-body).
+const CAM_SMOOTH = 6;
 
 // Module-scoped scratch vectors (single FlightRig instance → safe to reuse).
 const _horizForward = new Vector3();
@@ -37,7 +36,8 @@ export function FlightRig(): JSX.Element {
   useFrame((threeState, delta) => {
     recordFrame(delta);
 
-    const { started, paused, mode } = useStore.getState();
+    const { started, paused, mode, settings } = useStore.getState();
+    const cam = getAircraftDef(settings.aircraftId).camera;
     const guided = mode === 'guided';
     const missionComplete = guided && director.state.complete;
     const running = started && !paused && !simulation.state.crashed && !missionComplete;
@@ -75,8 +75,8 @@ export function FlightRig(): JSX.Element {
 
     _desiredCamPos
       .copy(position)
-      .addScaledVector(_horizForward, -CAM_DISTANCE)
-      .addScaledVector(_worldUp, CAM_HEIGHT);
+      .addScaledVector(_horizForward, -cam.distance)
+      .addScaledVector(_worldUp, cam.height);
 
     const camera = threeState.camera;
     if (!camInitialised.current) {
@@ -89,7 +89,7 @@ export function FlightRig(): JSX.Element {
 
     _lookTarget
       .copy(position)
-      .addScaledVector(_horizForward, CAM_LOOK_AHEAD)
+      .addScaledVector(_horizForward, cam.lookAhead)
       .addScaledVector(_worldUp, 1.5);
     camera.lookAt(_lookTarget);
   });
