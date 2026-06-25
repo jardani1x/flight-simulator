@@ -19,6 +19,10 @@ export interface QualityPreset {
   landmarkCount: number;
   /** Enable antialiasing on the WebGL context. */
   antialias: boolean;
+  /** Image-based environment lighting (nicer metal reflections). */
+  environment: boolean;
+  /** Post-processing pass (bloom + SMAA + vignette). Desktop-class only. */
+  postFx: boolean;
 }
 
 export const QUALITY_PRESETS: Record<GraphicsQuality, QualityPreset> = {
@@ -30,6 +34,8 @@ export const QUALITY_PRESETS: Record<GraphicsQuality, QualityPreset> = {
     terrainSegments: 48,
     landmarkCount: 30,
     antialias: false,
+    environment: false,
+    postFx: false,
   },
   medium: {
     maxPixelRatio: 1.5,
@@ -39,6 +45,8 @@ export const QUALITY_PRESETS: Record<GraphicsQuality, QualityPreset> = {
     terrainSegments: 96,
     landmarkCount: 70,
     antialias: true,
+    environment: true,
+    postFx: false,
   },
   high: {
     maxPixelRatio: 2,
@@ -48,5 +56,7 @@ export const QUALITY_PRESETS: Record<GraphicsQuality, QualityPreset> = {
     terrainSegments: 160,
     landmarkCount: 140,
     antialias: true,
+    environment: true,
+    postFx: true,
   },
 };

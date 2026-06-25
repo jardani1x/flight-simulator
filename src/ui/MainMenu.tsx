@@ -9,6 +9,7 @@ interface MainMenuProps {
 /** Opening screen: title, guided/free start options and a controls primer. */
 export function MainMenu({ onStart }: MainMenuProps): JSX.Element {
   const setSettingsOpen = useStore((s) => s.setSettingsOpen);
+  const setHangarOpen = useStore((s) => s.setHangarOpen);
   const deviceClass = useStore((s) => s.deviceClass);
 
   return (
@@ -31,6 +32,9 @@ export function MainMenu({ onStart }: MainMenuProps): JSX.Element {
           </p>
           <button type="button" className="btn" onClick={() => onStart('free')}>
             ✈ Free Flight
+          </button>
+          <button type="button" className="btn" onClick={() => setHangarOpen(true)}>
+            🛩 Aircraft
           </button>
           <button type="button" className="btn" onClick={() => setSettingsOpen(true)}>
             ⚙ Settings

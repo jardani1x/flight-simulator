@@ -8,6 +8,7 @@ interface PauseMenuProps {
 /** Pause overlay with resume / reset / settings / help actions. */
 export function PauseMenu({ onResume, onReset }: PauseMenuProps): JSX.Element {
   const setSettingsOpen = useStore((s) => s.setSettingsOpen);
+  const setHangarOpen = useStore((s) => s.setHangarOpen);
   const setShowHelp = useStore((s) => s.setShowHelp);
 
   return (
@@ -22,6 +23,9 @@ export function PauseMenu({ onResume, onReset }: PauseMenuProps): JSX.Element {
           </button>
           <button type="button" className="btn" onClick={onReset}>
             Reset Flight
+          </button>
+          <button type="button" className="btn" onClick={() => setHangarOpen(true)}>
+            Aircraft
           </button>
           <button type="button" className="btn" onClick={() => setShowHelp(true)}>
             Controls

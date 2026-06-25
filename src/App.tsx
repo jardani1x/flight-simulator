@@ -16,6 +16,7 @@ import { PauseMenu } from './ui/PauseMenu';
 import { CrashOverlay } from './ui/CrashOverlay';
 import { MissionCompleteOverlay } from './ui/MissionCompleteOverlay';
 import { SettingsPanel } from './ui/SettingsPanel';
+import { Hangar } from './ui/Hangar';
 import { ControlsHelpOverlay } from './ui/ControlsHelp';
 import { TopBar } from './ui/TopBar';
 import { OrientationHint } from './ui/OrientationHint';
@@ -57,6 +58,7 @@ function Game(): JSX.Element {
   const mode = useStore((s) => s.mode);
   const showHelp = useStore((s) => s.showHelp);
   const settingsOpen = useStore((s) => s.settingsOpen);
+  const hangarOpen = useStore((s) => s.hangarOpen);
   const start = useStore((s) => s.start);
 
   const { crashed } = useSimEvents();
@@ -112,6 +114,7 @@ function Game(): JSX.Element {
       )}
 
       {settingsOpen && <SettingsPanel />}
+      {hangarOpen && <Hangar />}
       {showHelp && <ControlsHelpOverlay />}
     </div>
   );

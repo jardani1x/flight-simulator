@@ -132,6 +132,36 @@ forgiving and you can **Reset** at any time.
 
 ---
 
+## Aircraft fleet & graphics
+
+Open **Aircraft** (main menu or pause menu) to pick from the fleet:
+
+- **Procedural airliners** — narrow-body, wide-body and jumbo silhouettes
+  (A320/737/777/747/A380-style) built entirely in code with engines, swept
+  wings, winglets, window/cheat lines and liveries. Always available, lightweight.
+- **HD models** — detailed **real glTF airliner models** (A320, 747‑8, A380)
+  loaded on demand from `public/aircraft/*.glb`. They auto-normalise (centre +
+  scale to a target length) and fall back to a procedural airliner while loading.
+
+> Adding more real models: drop a `.glb` into `public/aircraft/` and add a
+> `{ kind: 'gltf', url, targetLength, yaw }` entry to `src/scene/aircraft/fleet.ts`.
+> If a model faces the wrong way, adjust `yaw` (the nose should point −Z).
+
+Graphics scale with the quality preset (Settings):
+
+- **Image-based environment lighting** (Medium/High) — a procedural sky/sun/ground
+  light rig (no downloaded HDRI) gives believable metal and glass reflections.
+- **Post-processing** (High) — bloom, SMAA anti-aliasing and a subtle vignette.
+- **Shadows** (High), adaptive DPR, and per-device defaults
+  (phone→Low, tablet→Medium, desktop→High) keep mobile smooth.
+
+> ⚠️ The HD models bundle ~11 MB of `.glb` assets and the post-FX/environment
+> passes were validated by build + types here but **not yet eyeballed in a real
+> browser in this environment**; HD-model orientation (`yaw`) may need a quick
+> visual tweak.
+
+---
+
 ## Architecture
 
 The project deliberately separates **simulation**, **rendering**, **input**, and
@@ -164,7 +194,10 @@ src/
 │   ├── Sky.tsx           # Gradient sky-dome shader
 │   ├── Terrain.tsx       # Ground, runway, instanced landmarks
 │   ├── Clouds.tsx        # Instanced cloud puffs
-│   ├── AircraftModel.tsx # Procedural aircraft mesh
+│   ├── AircraftModel.tsx # Renders the selected aircraft (procedural or glTF)
+│   ├── aircraft/         # Fleet registry, procedural airliner & glTF loader
+│   │   ├── types.ts · fleet.ts (+ tests) · ProceduralAirliner.tsx · GltfAircraft.tsx
+│   ├── Effects.tsx       # Post-processing stack (bloom · SMAA · vignette)
 │   ├── MissionMarkers.tsx # Glowing guidance markers, pulsed by active phase
 │   ├── FlightRig.tsx     # Drives the sim + director + chase camera each frame
 │   ├── SimulationContext.tsx # Provides the Simulation + FlightDirector + reset
@@ -296,5 +329,12 @@ controls when slow), and a gentle weathervane term gives static stability.
 
 ## License
 
-MIT — see `package.json`. All assets are procedurally generated; there are no
-third-party art assets to attribute.
+**GPL-2.0-or-later** — see [`LICENSE`](./LICENSE).
+
+The project is GPL because it bundles real airliner 3D models
+(`public/aircraft/*.glb`) sourced from the GPLv2
+[FlightAirMap 3D models](https://github.com/Ysurac/FlightAirMap-3dmodels)
+project (which draws on Flightradar24 and FlightGear). Full attribution is in
+[`THIRD_PARTY_LICENSES.md`](./THIRD_PARTY_LICENSES.md). The procedural fleet and
+all other scenery are generated in code. No official manufacturer liveries or
+trademarks are claimed; "Boeing"/"Airbus" references are descriptive only.

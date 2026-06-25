@@ -5,7 +5,13 @@ beforeEach(() => {
   localStorage.clear();
   // Reset the store to a pristine, un-hydrated state for each test.
   useStore.setState({
-    settings: { graphicsQuality: 'high', sensitivity: 1, invertPitch: false, showFps: false },
+    settings: {
+      graphicsQuality: 'high',
+      sensitivity: 1,
+      invertPitch: false,
+      showFps: false,
+      aircraftId: 'a320',
+    },
     settingsHydrated: false,
   });
 });
